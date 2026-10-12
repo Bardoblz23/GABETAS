@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0F19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gabetas">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Control de gabetas</title>
+<style>
+:root{--bg:#0B0F19;--p:#111827;--p2:#1f2937;--ln:#334155;--tx:#e5e7eb;--mu:#94a3b8;--bl:#2563eb;--gr:#16a34a;--am:#d97706;--rd:#dc2626;--vi:#7c3aed}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px}
+#app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.top{position:sticky;top:0;z-index:5;background:var(--p);border-bottom:1px solid var(--p2);padding:calc(12px + env(safe-area-inset-top)) 16px 10px;display:flex;gap:10px;align-items:center}
+.top .bk{width:36px;height:36px;border-radius:10px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.top h1{font-size:18px;line-height:1.2}.top p{font-size:12px;color:var(--mu);margin-top:2px}
+.body{flex:1;padding:14px 16px 96px}
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;display:flex;background:var(--p);border-top:1px solid var(--p2);padding:6px 0 calc(8px + env(safe-area-inset-bottom));z-index:6}
+.nav div{flex:1;text-align:center;font-size:11px;color:#64748b;position:relative;padding-top:2px}
+.nav div b{display:block;font-size:20px;margin-bottom:1px}.nav .on{color:#60a5fa}
+.nav .bd{position:absolute;top:-2px;left:56%;background:var(--am);color:#fff;border-radius:9px;font-size:10px;padding:0 6px;font-weight:700}
+.tabs{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto}.tab{flex:1;min-width:54px;text-align:center;padding:10px 0;border-radius:12px;background:var(--p2);font-weight:700}.tab.on{background:var(--bl);color:#fff}
+.row{background:var(--p);border:1px solid var(--p2);border-radius:14px;padding:11px 13px;margin-bottom:9px}
+.row b{font-size:15px}.row small{display:block;color:var(--mu);font-size:12px;margin:2px 0 7px}
+.bar{height:7px;background:var(--p2);border-radius:5px}.bar i{display:block;height:100%;background:#22c55e;border-radius:5px}
+.pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:9px;background:#312e81;color:#c7d2fe;margin-left:6px;font-weight:600;vertical-align:1px}.pill.w{background:#78350f;color:#fde68a}.pill.g{background:#14532d;color:#bbf7d0}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.sp{position:relative;min-height:112px;border-radius:12px;background:var(--p);border:1px dashed #475569;padding:7px;font-size:12px;color:var(--mu);display:flex;flex-direction:column;justify-content:space-between}
+.sp.ok{border:1px solid var(--gr);background:#0f2a1c;color:#d1fae5}.sp.cur{border:2px solid #3b82f6;background:#10213f;color:#fff}
+.sp b{font-size:20px;color:#fff}.sp .nm{font-size:10.5px;line-height:1.15;color:#cbd5e1;max-height:36px;overflow:hidden}
+.sp .th{height:30px;border-radius:7px;background:linear-gradient(135deg,#475569,#1e293b) center/cover}
+.cnt{position:absolute;right:5px;top:5px;background:var(--vi);color:#fff;border-radius:9px;padding:1px 7px;font-size:11px;font-weight:700}.cnt.nw{background:var(--am)}
+.btn{display:block;width:100%;text-align:center;padding:14px;border-radius:14px;background:var(--gr);font-weight:700;font-size:16px;margin-top:10px;color:#fff;border:0;font-family:inherit}
+.btn.b{background:var(--bl)}.btn.g{background:var(--p2);color:#cbd5e1}.btn.s{padding:8px;font-size:13px;margin-top:6px;background:var(--am)}.btn.off{background:var(--p2);color:#64748b}.btn.d{background:var(--rd)}.btn.sm{padding:9px;font-size:13px}
+.warn{background:#3b2a0a;border:1px solid #b45309;color:#fcd34d;border-radius:12px;padding:9px 11px;font-size:12.5px;margin:10px 0;line-height:1.4}
+.ok-b{background:#0f2a1c;border:1px solid var(--gr);color:#bbf7d0;border-radius:12px;padding:9px 11px;font-size:12.5px;margin:10px 0;line-height:1.4}
+.info{color:var(--mu);font-size:12px;line-height:1.5;margin:8px 2px}
+.f{margin-bottom:9px}.f label{font-size:11px;color:var(--mu);display:block;margin-bottom:3px}
+input[type=text],input[type=number],input[type=email],textarea,select{width:100%;background:var(--p);border:1px solid var(--ln);border-radius:11px;padding:11px 12px;font-size:15px;color:var(--tx);font-family:inherit}
+textarea{min-height:120px;font-size:12px}
+.seg{display:flex;gap:6px;margin-bottom:9px}.seg span{flex:1;text-align:center;padding:9px 0;border-radius:11px;background:var(--p2);font-size:12.5px;font-weight:700}.seg .on{background:var(--bl);color:#fff}
+.gc{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}.gc span{padding:7px 11px;border-radius:14px;background:var(--p2);font-size:12.5px;font-weight:700}.gc .on{background:var(--vi);color:#fff}
+.photo{height:150px;border-radius:16px;background:linear-gradient(135deg,#64748b,#1e293b) center/cover;display:flex;align-items:center;justify-content:center;font-size:13px;color:#e2e8f0;margin-bottom:10px;position:relative}
+.cam{position:absolute;right:10px;bottom:10px;background:var(--bl);border-radius:20px;padding:8px 13px;font-weight:700;font-size:13px;color:#fff}
+.step{display:flex;align-items:center;justify-content:space-between;background:var(--p);border-radius:14px;padding:8px 10px;margin:6px 0}
+.step span{width:56px;height:46px;border-radius:12px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;user-select:none}
+.step input{width:100px;text-align:center;font-size:30px;font-weight:800;background:transparent;border:0;color:#fff}
+.it{background:var(--p);border:1px solid var(--p2);border-radius:14px;padding:9px;margin-bottom:8px}
+.it .l{display:flex;gap:10px;align-items:center}.it .th{width:46px;height:46px;border-radius:9px;flex:none;background:linear-gradient(135deg,#475569,#1e293b) center/cover}
+.it b{font-size:14px}.it small{display:block;color:var(--mu);font-size:11px;margin-top:2px}.it em{margin-left:auto;font-style:normal;font-size:24px;font-weight:800;padding-left:8px}
+.ck{width:24px;height:24px;border-radius:7px;background:var(--gr);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}.ck.o{background:var(--p2);border:1px solid #475569}
+.tg{font-size:10px;padding:2px 7px;border-radius:9px;margin-right:4px}.tg.ok{background:#14532d;color:#bbf7d0}.tg.nw{background:#78350f;color:#fde68a}
+.chp{display:inline-flex;align-items:center;gap:6px;background:#312e81;color:#e0e7ff;border-radius:14px;padding:6px 11px;font-size:13px;font-weight:700;margin:0 5px 6px 0}.chp i{font-style:normal;color:#a5b4fc;font-size:13px;padding-left:2px}.chp.add{background:var(--p2);color:var(--mu);border:1px dashed #475569}.chp.n{background:#374151;color:#e5e7eb}
+.sec{font-size:11.5px;color:var(--mu);margin:12px 2px 6px;font-weight:700;letter-spacing:.04em}
+.li{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--p2);font-size:13px}
+.kp{display:flex;gap:9px;margin-bottom:12px}.kp div{flex:1;background:var(--p);border-radius:14px;padding:12px;text-align:center}.kp .big{font-size:30px;font-weight:800}.kp small{color:var(--mu);font-size:11px}
+.sz{display:flex;align-items:center;justify-content:space-between;margin:8px 0;font-size:14px}.sz .s{display:flex;align-items:center;gap:10px}.sz .s span{width:38px;height:38px;border-radius:10px;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}.sz .s b{min-width:26px;text-align:center;font-size:18px}
+.mg{display:grid;gap:4px}.mg div{min-height:28px;border-radius:6px;background:#0f2a1c;border:1px solid var(--gr);font-size:10px;display:flex;align-items:center;justify-content:center;color:#bbf7d0}.mg .e{background:var(--p);border:1px dashed #475569;color:#64748b}.mg .x{background:#3b0f0f;border-color:var(--rd);color:#fecaca}.mg .h{background:none;border:0;color:var(--mu)}.mg .sg{border:2px solid #f59e0b;background:#3b2a0a;color:#fde68a;font-weight:700}
+.rad{display:flex;gap:10px;align-items:center;background:var(--p);border:1px solid var(--ln);border-radius:12px;padding:11px;margin-bottom:8px;font-size:13px}.rad i{width:18px;height:18px;border-radius:50%;border:2px solid #64748b;flex:none}.rad.on{border-color:#3b82f6}.rad.on i{border-color:#3b82f6;background:radial-gradient(#3b82f6 45%,transparent 50%)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0b1220;border:1px solid var(--ln);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:30;display:none;max-width:90%;text-align:center}
+#modal{position:fixed;inset:0;background:#000a;z-index:20;display:none;align-items:flex-end;justify-content:center}
+#modal .box{background:var(--p);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:520px;max-height:85vh;overflow:auto}
+#modal h2{font-size:17px;margin-bottom:8px}
+.sug{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.sug span{background:var(--p2);border-radius:14px;padding:6px 11px;font-size:12px}
+.link{color:#93c5fd;text-decoration:underline;font-size:12.5px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<div id="modal"></div>
+<input type="file" id="fotoIn" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="catIn" accept=".csv,.tsv,.txt,text/*" style="display:none">
+<script src="jszip.min.js"></script>
+<script>
+'use strict';
+/* ===================== utilidades ===================== */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+const colL=i=>String.fromCharCode(65+i);
+const parseU=u=>{const m=/^(\d+)-([A-Z]+)(\d+)$/.exec(u||'');return m?{g:m[1],c:m[2],f:+m[3]}:null};
+const norm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const hoy=()=>new Date();
+const stamp=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+const SAMPLE='';
+
+/* ===================== base de datos (IndexedDB) ===================== */
+const DB={db:null,
+ open(){return new Promise((ok,no)=>{const r=indexedDB.open('gabetas-app',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('kv');d.createObjectStore('fotos')};r.onsuccess=()=>{DB.db=r.result;ok()};r.onerror=()=>no(r.error)})},
+ get(st,k){return new Promise((ok,no)=>{const q=DB.db.transaction(st).objectStore(st).get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)})},
+ put(st,k,v){return new Promise((ok,no)=>{const t=DB.db.transaction(st,'readwrite');t.objectStore(st).put(v,k);t.oncomplete=()=>ok();t.onerror=()=>no(t.error)})},
+ del(st,k){return new Promise((ok,no)=>{const t=DB.db.transaction(st,'readwrite');t.objectStore(st).delete(k);t.oncomplete=()=>ok();t.onerror=()=>no(t.error)})},
+ clear(){return new Promise((ok)=>{const t=DB.db.transaction(['kv','fotos'],'readwrite');t.objectStore('kv').clear();t.objectStore('fotos').clear();t.oncomplete=()=>ok()})}
+};
+const defaultState=()=>({v:1,
+ cfg:{gabetas:[{id:'01',nombre:'Gabeta 01',cols:3,filas:4},{id:'02',nombre:'Gabeta 02',cols:3,filas:4},{id:'03',nombre:'Gabeta 03',cols:8,filas:8},{id:'04',nombre:'Gabeta 04',cols:8,filas:8}],
+  grupos:[{nombre:'1A = 2A',celulas:['1A','2A']},{nombre:'3A–6A',celulas:['3A','4A','5A','6A']},{nombre:'1C = 2C',celulas:['1C','2C']}],
+  celulas:['1A','2A','3A','4A','5A','6A','1C','2C'],vacios:{}},
+ entries:[],pedidos:[],caps:[],meta:{cod:0,correo:'',gab:'03',catalogoFecha:null,cfgDirty:false,lotes:0}});
+let S=defaultState();
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>{DB.put('kv','state',S).catch(()=>toast('No se pudo guardar en el celular'))},250)}
+async function saveNow(){clearTimeout(saveT);await DB.put('kv','state',S)}
+
+/* ===================== consultas ===================== */
+const gab=id=>S.cfg.gabetas.find(g=>g.id===id);
+const entriesAt=u=>S.entries.filter(e=>e.ubic===u);
+const sinFoto=e=>!e.fotoId&&!e.fotoXls;
+function filaInfo(g,f){
+ const gb=gab(g);let contados=0,piezas=0;const tally={};
+ for(let c=0;c<gb.cols;c++){const u=`${g}-${colL(c)}${f}`;const es=entriesAt(u);
+  if(es.length||S.cfg.vacios[u])contados++;
+  es.forEach(e=>{piezas+=Number(e.cant)||0;const gs=e.grupos&&e.grupos.length?e.grupos:['(sin grupo)'];gs.forEach(x=>tally[x]=(tally[x]||0)+1)})}
+ const keys=Object.keys(tally).sort((a,b)=>tally[b]-tally[a]);
+ let label,cls='',det='';
+ if(!keys.length){label=contados?'Vacía':'sin contar'}
+ else if(keys.length===1){label=keys[0]==='(sin grupo)'?'Sin grupo':keys[0];cls=keys[0]==='(sin grupo)'?'':'g'}
+ else{label='Mezcla';cls='w';det=keys.slice(0,3).map(k=>`${k} (${tally[k]})`).join(' · ')}
+ const dom=keys.find(k=>k!=='(sin grupo)')||null;
+ return {contados,total:gb.cols,piezas,label,cls,det,dom,domN:dom?tally[dom]:0,tally};
+}
+function spaceFree(u){return entriesAt(u).length===0}
+function suggestUbic(grupos){
+ let first=null,rowEmpty=null;
+ for(const gb of S.cfg.gabetas){for(let f=1;f<=gb.filas;f++){
+  const info=filaInfo(gb.id,f);const vacia=Object.keys(info.tally).length===0;
+  for(let c=0;c<gb.cols;c++){const u=`${gb.id}-${colL(c)}${f}`;if(!spaceFree(u))continue;
+   if(info.dom&&grupos&&grupos.includes(info.dom))return u;
+   if(!rowEmpty&&vacia)rowEmpty=u;if(!first)first=u}}}
+ return rowEmpty||first;
+}
+const grupoDeCelula=a=>S.cfg.grupos.filter(g=>g.celulas.includes(a)).map(g=>g.nombre);
+const knownCelulas=()=>{const s=new Set(S.cfg.celulas);S.cfg.grupos.forEach(g=>g.celulas.forEach(c=>s.add(c)));return [...s]};
+const sinGrupo=()=>knownCelulas().filter(c=>!S.cfg.grupos.some(g=>g.celulas.includes(c)));
+const pend=()=>S.caps.filter(c=>c.estado==='pend');
+const sinUbicN=()=>S.entries.filter(e=>e.sinUbic&&!e.ubic).length;
+
+/* ===================== UI base ===================== */
+let UI={tab:'gab',stack:[{v:'home'}]};let D=null;let G=null;let LL=null;let PK=null;let CFGTAB='grupos';
+const cur=()=>UI.stack[UI.stack.length-1];
+function push(v,p){UI.stack.push(Object.assign({v},p||{}));render();window.scrollTo(0,0)}
+function back(){if(UI.stack.length>1)UI.stack.pop();render();window.scrollTo(0,0)}
+function tab(t){UI.tab=t;UI.stack=[{v:t==='gab'?'home':t==='llego'?'llego':t==='cfg'?'cfg':'enviar'}];render();window.scrollTo(0,0)}
+function toast(m,ms=2600){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',ms)}
+function modal(html){const m=document.getElementById('modal');m.innerHTML=`<div class="box">${html}</div>`;m.style.display='flex'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+function shell(title,sub,body,showBack){
+ const pn=pend().length;
+ const nv=[['gab','▦','Gabetas'],['llego','📦','Llegó'],['cfg','⚙','Config'],['env','✉','Enviar']];
+ return `<div class="top">${showBack?`<div class="bk" data-a="back">‹</div>`:''}<div><h1>${title}</h1>${sub?`<p>${sub}</p>`:''}</div></div>
+ <div class="body">${body}</div>
+ <div class="nav">${nv.map(([k,i,t])=>`<div class="${UI.tab===k?'on':''}" data-a="tab" data-t="${k}"><b>${i}</b>${t}${k==='env'&&pn?`<span class="bd">${pn}</span>`:''}</div>`).join('')}</div>`;
+}
+
+/* ===================== vistas ===================== */
+const V={};
+function render(){
+ const c=cur();const f=V[c.v];
+ document.getElementById('app').innerHTML=f?f(c):shell('Error','', 'Vista desconocida: '+esc(c.v));
+}
+V.home=function(){
+ const gb=gab(S.meta.gab)||S.cfg.gabetas[0];S.meta.gab=gb.id;
+ const sin=sinUbicN();
+ let body='';
+ body+=`<button class="btn b" style="margin:0 0 10px;font-size:17px;padding:15px" data-a="tab" data-t="llego">📦 Llegó material</button>`;
+ if(sin)body+=`<div class="warn" data-a="sinubic" style="cursor:pointer">${sin} herramental${sin>1?'es':''} sin ubicación · toca para asignar</div>`;
+ if(!S.entries.length&&!S.pedidos.length)body+=`<div class="ok-b">Para empezar: en <b>Enviar → Actualizar catálogo</b> carga el catálogo de tu Excel . También puedes empezar a contar de una vez.</div>`;
+ body+=`<div class="tabs">${S.cfg.gabetas.map(g=>`<div class="tab ${g.id===gb.id?'on':''}" data-a="gab" data-g="${g.id}">${g.id}</div>`).join('')}</div>`;
+ for(let f=1;f<=gb.filas;f++){const i=filaInfo(gb.id,f);
+  body+=`<div class="row" data-a="fila" data-f="${f}" style="cursor:pointer"><b>Fila ${f} <span class="pill ${i.cls}">${esc(i.label)}</span></b><small>${i.det?esc(i.det)+' · ':''}${i.contados} de ${i.total} contados${i.piezas?' · '+i.piezas+' piezas':''}</small><div class="bar"><i style="width:${Math.round(100*i.contados/i.total)}%"></i></div></div>`}
+ return shell('Control de gabetas',`${esc(gb.nombre)} · ${S.entries.length} registros · ${pend().length} por enviar`,body,false);
+};
+V.fila=function(c){
+ const gb=gab(c.g),f=c.f,info=filaInfo(c.g,f);
+ let cells='',next=null;
+ for(let k=0;k<gb.cols;k++){const u=`${c.g}-${colL(k)}${f}`;const es=entriesAt(u);const vac=S.cfg.vacios[u];
+  const n=es.length;const qty=es.reduce((a,e)=>a+(Number(e.cant)||0),0);
+  if(!n&&!vac&&!next)next=u;
+  const isNext=u===next;
+  const name=n===1?esc(es[0].nombre):(n?`${n} herramentales`:(vac?'vacío':''));
+  const th=n===1&&es[0].thumb?`<div class="th" style="background-image:url(${es[0].thumb})"></div>`:`<div style="height:30px"></div>`;
+  const nuevo=es.some(e=>sinFoto(e)&&e.cant>0);
+  cells+=`<div class="sp ${n?'ok':(isNext?'cur':'')}" data-a="esp" data-u="${u}">${colL(k)}${n>1?`<span class="cnt">${n}</span>`:(nuevo?`<span class="cnt nw">nuevo</span>`:'')}${n?th:''}<div class="nm">${name}</div>${n?`<b>${qty}</b>`:(isNext?'<b>?</b>':'<span>'+(vac?'':'vacío')+'</span>')}</div>`}
+ let warn='';
+ if(info.cls==='w'&&info.dom&&info.domN>=2){
+  for(let k=0;k<gb.cols;k++){const u=`${c.g}-${colL(k)}${f}`;entriesAt(u).forEach(e=>{
+   if(e.okMezcla||!(e.grupos&&e.grupos.length)||e.grupos.includes(info.dom))return;
+   warn+=`<div class="warn">⚠ La columna ${colL(k)} (${esc(e.nombre)}) es del grupo ${esc(e.grupos.join(', '))}. ¿Moverla o dejarla?<div style="display:flex;gap:8px;margin-top:6px"><button class="btn sm b" style="margin:0" data-a="mover" data-id="${e.id}">Moverla</button><button class="btn sm g" style="margin:0" data-a="dejar" data-id="${e.id}">Dejarla aquí</button></div></div>`})}}
+ const body=`<div class="grid">${cells}</div>${warn}
+ <div class="info">Verde = contado · Azul = el que sigue · Gris punteado = pendiente</div>
+ ${next?`<button class="btn b" data-a="esp" data-u="${next}" data-new="1">Contar columna ${parseU(next).c}</button>`:''}
+ <button class="btn g" data-a="filaok" data-f="${f}">Marcar fila terminada</button>`;
+ return shell(`${esc(gb.nombre)} · Fila ${f}`,`Etiqueta: <b style="color:#86efac">${esc(info.label)}</b> · ${info.contados} de ${info.total}`,body,true);
+};
+V.esp=function(c){
+ const es=entriesAt(c.u);const p=parseU(c.u);
+ let body='';
+ if(!es.length)body+=`<div class="info">Este espacio está vacío. Agrega el primer herramental.</div>`;
+ es.forEach(e=>{body+=`<div class="it" data-a="editar" data-id="${e.id}" style="cursor:pointer"><div class="l"><div class="th" ${e.thumb?`style="background-image:url(${e.thumb})"`:''}></div><div><b>${esc(e.nombre)}</b><small>${esc(e.origen||'')} ${esc(e.codigo||'')} ${e.grupos&&e.grupos.length?'· '+esc(e.grupos.join(', ')):''}${sinFoto(e)?' · <span style="color:#fcd34d">sin foto</span>':''}</small></div><em>${e.cant}</em></div></div>`});
+ body+=`<button class="btn b" data-a="nuevoItem" data-u="${c.u}">＋ ${es.length?'Agregar otro herramental aquí':'Agregar herramental'}</button>`;
+ body+=`<button class="btn g" data-a="fotoEsp" data-u="${c.u}">Foto general del espacio</button>`;
+ body+=`<button class="btn g" data-a="vacio" data-u="${c.u}">${S.cfg.vacios[c.u]?'Quitar marca de vacío':'Marcar espacio vacío'}</button>`;
+ const tot=es.reduce((a,e)=>a+(Number(e.cant)||0),0);
+ return shell(`Espacio ${c.u}`,`${es.length} herramental${es.length===1?'':'es'} · ${tot} piezas`,body,true);
+};
+/* ---- formulario de herramental ---- */
+const ORIG=['SmarTeam','Legacy','Sin código'];
+function newDraft(o){return Object.assign({mode:'conteo',ubic:'',entryId:null,codigo:'',nombre:'',origen:'SmarTeam',grupos:[],cant:1,prev:null,blob:null,thumb:null,req:'',linea:null,from:null},o)}
+V.item=function(c){
+ const d=D;const llegada=d.mode==='llegada';
+ const origs=llegada?['Del pedido',...ORIG]:ORIG;
+ const titulo=d.mode==='edit'?'Editar herramental':llegada?'Llegó: '+esc(d.nombre||d.codigo):'Espacio '+esc(d.ubic);
+ const sub=llegada?`Req. ${esc(d.req)} · ${d.ubic?'Ubicación '+esc(d.ubic):'sin ubicación'}`:(d.mode==='edit'?esc(d.ubic):'Misma pantalla para altas, conteos y llegadas');
+ const body=`<div class="photo" id="photoBox" data-a="foto" style="${d.prev?`background-image:url(${d.prev})`:''}">${d.prev?'':'Foto del herramental'}<div class="cam">📷 ${d.prev?'Cambiar foto':'Tomar foto'}</div></div>
+ <div class="f"><label>¿Qué código trae grabado?</label></div>
+ <div class="seg">${origs.map(o=>`<span class="${d.origen===o?'on':''}" data-a="origen" data-o="${esc(o)}">${o}</span>`).join('')}</div>
+ <div class="f"><label>Código ${d.origen==='Sin código'?'(se asignará uno propio al guardar)':'grabado'}</label><input type="text" id="fCod" data-m="codigo" value="${esc(d.codigo)}" ${d.origen==='Sin código'?'disabled placeholder="L-'+pad(S.meta.cod+1,4)+'"':''} autocomplete="off"></div>
+ <div class="f"><label>Nombre del herramental</label><input type="text" id="fNom" data-m="nombre" value="${esc(d.nombre)}" autocomplete="off"></div>
+ <div id="sug"></div>
+ <div class="f" style="margin-bottom:4px"><label>Células que lo usan (una o varias)</label></div>
+ <div class="gc">${S.cfg.grupos.map(g=>`<span class="${d.grupos.includes(g.nombre)?'on':''}" data-a="grp" data-g="${esc(g.nombre)}">${esc(g.nombre)}${d.grupos.includes(g.nombre)?' ✓':''}</span>`).join('')}<span data-a="cfgnuevo" style="background:transparent;border:1px dashed #475569;color:#94a3b8">+ otro grupo</span></div>
+ <div class="f"><label>Cantidad${d.mode==='llegada'?' que llegó':' contada'}</label></div>
+ <div class="step"><span data-a="cant" data-d="-1">−</span><input type="number" inputmode="numeric" min="0" data-m="cant" value="${d.cant}"><span data-a="cant" data-d="1">+</span></div>
+ <button class="btn" data-a="guardarItem">${llegada?'Guardar y volver al pedido':'Guardar'}</button>
+ ${d.mode==='edit'?`<button class="btn g sm" data-a="salida">Registrar salida (sacar piezas)</button><button class="btn g sm" data-a="mover" data-id="${d.entryId}">Mover a otro espacio</button><button class="btn g sm" style="color:#fca5a5" data-a="borrarItem">Eliminar registro (error de captura)</button>`:''}`;
+ return shell(titulo,sub,body,true);
+};
+function refreshSug(){
+ const box=document.getElementById('sug');if(!box||!D||D.mode==='edit')return;
+ const q=norm(D.codigo)+' '+norm(D.nombre);const a=norm(D.codigo),b=norm(D.nombre);
+ if(a.length<2&&b.length<3){box.innerHTML='';return}
+ const seen=new Set();const res=[];
+ const add=(codigo,nombre,grupos,origen,e)=>{const k=codigo+'|'+nombre;if(seen.has(k))return;seen.add(k);
+  if((a.length>=2&&norm(codigo).includes(a))||(b.length>=3&&norm(nombre).includes(b)))res.push({codigo,nombre,grupos,origen,e})};
+ S.entries.forEach(e=>add(e.codigo,e.nombre,e.grupos,e.origen,e));
+ S.pedidos.forEach(p=>p.lineas.forEach(l=>add(l.codigo,l.nombre,grupoDeCelula(l.area),'Del pedido',null)));
+ box.innerHTML=res.length?`<div class="info" style="margin:0 0 4px">¿Es alguno de estos?</div><div class="sug">${res.slice(0,5).map((r,i)=>`<span data-a="sug" data-i="${i}">${esc(r.codigo)} · ${esc(r.nombre)}</span>`).join('')}</div>`:'';
+ refreshSug.res=res.slice(0,5);
+}
+function openItem(o){D=newDraft(o);push('item')}
+/* ---- ubicar ---- */
+V.ubicar=function(c){
+ const p=PK;const sug=suggestUbic(p.grupos);
+ let body='';
+ if(!p.elegir){
+  if(sug){const pu=parseU(sug);const info=filaInfo(pu.g,pu.f);
+   body+=`<div class="f"><label>Espacio sugerido (fila con ese grupo y lugar libre)</label></div><div class="info" style="margin:0 0 6px">${esc(gab(pu.g).nombre)} · Fila ${pu.f} · ${esc(info.label)}</div>${miniFila(pu.g,pu.f,sug)}
+   <button class="btn" data-a="pickU" data-u="${sug}">Usar ${sug}</button>`}
+  else body+=`<div class="warn">No hay espacios libres. Elige uno compartido.</div>`;
+  body+=`<button class="btn g" data-a="elegirOtro">Elegir otro espacio…</button>`;
+ }else{
+  const gb=gab(p.g)||S.cfg.gabetas[0];p.g=gb.id;
+  body+=`<div class="tabs">${S.cfg.gabetas.map(g=>`<div class="tab ${g.id===gb.id?'on':''}" data-a="pkg" data-g="${g.id}">${g.id}</div>`).join('')}</div><div class="info">Toca el espacio donde lo vas a guardar. Los marcados ya tienen herramentales (puedes compartir).</div>`;
+  let h=`<div class="mg" style="grid-template-columns:18px repeat(${gb.cols},1fr)"><div class="h"></div>`+Array.from({length:gb.cols},(_,i)=>`<div class="h">${colL(i)}</div>`).join('');
+  for(let f=1;f<=gb.filas;f++){h+=`<div class="h">${f}</div>`;for(let k=0;k<gb.cols;k++){const u=`${gb.id}-${colL(k)}${f}`;const n=entriesAt(u).length;h+=`<div class="${n?'':'e'}" data-a="pickU" data-u="${u}" style="cursor:pointer;min-height:34px">${n||''}</div>`}}
+  body+=h+'</div>';
+ }
+ return shell('Asignar ubicación',esc(p.titulo||''),body,true);
+};
+function miniFila(g,f,mark){
+ const gb=gab(g);let h=`<div class="mg" style="grid-template-columns:repeat(${Math.min(gb.cols,4)},1fr);margin-bottom:12px">`;
+ for(let k=0;k<gb.cols;k++){const u=`${g}-${colL(k)}${f}`;const es=entriesAt(u);
+  h+=`<div class="${u===mark?'sg':es.length?'':'e'}" style="min-height:44px;flex-direction:column">${colL(k)}<br>${u===mark?'aquí ✓':esc(es[0]?es[0].nombre.slice(0,12):'libre')}</div>`}
+ return h+'</div>';
+}
+function askUbic(grupos,titulo,cb){PK={grupos:grupos||[],titulo,cb,elegir:false,g:S.meta.gab};push('ubicar')}
+/* ---- llegó material ---- */
+V.llego=function(){
+ const ps=S.pedidos.filter(p=>!p.recibido);
+ let body='';
+ if(!S.pedidos.length)body+=`<div class="ok-b">Aún no hay pedidos cargados. Carga el catálogo de tu Excel en <b>Enviar → Actualizar catálogo</b>.</div>`;
+ ps.forEach(p=>{const vencida=p.entrega&&p.entrega<new Date().toISOString().slice(0,10);
+  body+=`<div class="row" data-a="abrirReq" data-r="${esc(p.req)}" style="cursor:pointer"><b>Req. ${esc(p.req)}${p.proveedor?' · '+esc(p.proveedor):''}</b><small>${p.lineas.length} herramental${p.lineas.length>1?'es':''}${p.entrega?' · entrega '+esc(p.entrega):''} ${vencida?'<span class="pill w">vencida</span>':''}</small></div>`});
+ if(S.pedidos.length&&!ps.length)body+=`<div class="info">Todos los pedidos cargados ya los recibiste. Manda tu envío y actualiza el catálogo.</div>`;
+ body+=`<button class="btn g" data-a="altaSinPedido">Llegó algo sin pedido (alta nueva)</button>`;
+ return shell('Llegó material','Pedidos por llegar (del catálogo del Excel)',body,false);
+};
+function lineaInfo(l){
+ const e=S.entries.find(x=>x.codigo===l.codigo&&x.ubic);
+ return {reg:!!e&&!l.nuevaUbic,e};
+}
+V.req=function(c){
+ const p=S.pedidos.find(x=>x.req===c.r);if(!p)return shell('Pedido','', 'No existe',true);
+ if(!LL||LL.req!==p.req){LL={req:p.req,lineas:p.lineas.map(l=>({codigo:l.codigo,nombre:l.nombre,cant:Number(l.cant)||1,area:l.area,done:false,defer:false,ubic:'',entry:null}))};
+  LL.lineas.forEach(l=>{const e=S.entries.find(x=>x.codigo===l.codigo&&x.ubic);if(e){l.entry=e.id;l.ubic=e.ubic}})}
+ const pendNuevas=LL.lineas.filter(l=>!l.entry&&!l.done&&!l.defer).length;
+ let body='';
+ LL.lineas.forEach((l,i)=>{
+  const reg=!!l.entry;const ok=reg||l.done||l.defer;
+  const tag=reg?`<span class="tg ok">ya registrado</span> ${esc(l.ubic)} · se suma`:l.done?`<span class="tg ok">nuevo</span> ${esc(l.ubic)} · foto ✓`:l.defer?`<span class="tg nw">asignar después</span> sin ubicación`:`<span class="tg nw">NUEVO</span> falta ubicación y foto`;
+  body+=`<div class="it"><div class="l"><div class="ck ${ok?'':'o'}">${ok?'✓':''}</div><div style="flex:1"><b>${esc(l.codigo)} ${esc(l.nombre)}</b><small>${tag}</small></div><em data-a="cantLinea" data-i="${i}" style="cursor:pointer">${l.cant}</em></div>${!ok?`<button class="btn s" data-a="asignarLinea" data-i="${i}">Asignar ubicación y foto ›</button>`:''}${reg&&!l.done?`<div class="info" style="margin:4px 0 0"><span class="link" data-a="cambiarUbicLinea" data-i="${i}">Cambiar ubicación</span></div>`:''}</div>`});
+ body+=`<div class="info">La cantidad viene del pedido. Toca el número para corregirla si llegó diferente.</div>`;
+ body+=pendNuevas?`<button class="btn off" disabled>Confirmar (faltan ${pendNuevas} por asignar)</button><button class="btn g sm" data-a="confirmarReq" data-d="1">Confirmar y asignar los nuevos después</button>`:`<button class="btn" data-a="confirmarReq">Confirmar: todo llegó</button>`;
+ return shell(`Req. ${esc(p.req)}`,`${esc(p.proveedor||'')} · todo llegó junto`,body,true);
+};
+V.sinubic=function(){
+ const es=S.entries.filter(e=>e.sinUbic&&!e.ubic);
+ let body=es.length?'':'<div class="ok-b">Todo tiene ubicación 👍</div>';
+ es.forEach(e=>{body+=`<div class="it"><div class="l"><div class="th" ${e.thumb?`style="background-image:url(${e.thumb})"`:''}></div><div><b>${esc(e.nombre)}</b><small>${esc(e.codigo)} · ${e.cant} piezas</small></div></div><button class="btn s" data-a="mover" data-id="${e.id}">Asignar ubicación</button></div>`});
+ return shell('Sin ubicación','Herramentales por acomodar',body,true);
+};
+/* ---- config ---- */
+V.cfg=function(){
+ let body=`<div class="tabs" style="margin-bottom:8px"><div class="tab ${CFGTAB==='grupos'?'on':''}" data-a="cfgtab" data-t="grupos" style="font-size:13px">Grupos</div><div class="tab ${CFGTAB==='gab'?'on':''}" data-a="cfgtab" data-t="gab" style="font-size:13px">Gabetas</div></div>`;
+ if(CFGTAB==='grupos'){
+  S.cfg.grupos.forEach(g=>{const es=S.entries.filter(e=>e.grupos&&e.grupos.includes(g.nombre));
+   body+=`<div class="row" data-a="editGrupo" data-g="${esc(g.nombre)}" style="cursor:pointer"><b>Grupo ${esc(g.nombre)}</b><small>${es.length} herramental${es.length===1?"":"es"} · ${es.reduce((a,e)=>a+(Number(e.cant)||0),0)} piezas</small>${g.celulas.map(c=>`<span class="chp">${esc(c)}</span>`).join('')}</div>`});
+  body+=`<div class="sec">CÉLULAS SIN GRUPO</div><div>${sinGrupo().map(c=>`<span class="chp n">${esc(c)} <i data-a="quitaCel" data-c="${esc(c)}">✕</i></span>`).join('')||'<span class="info">Ninguna</span>'}</div>
+  <button class="btn b" data-a="nuevoGrupo">＋ Nuevo grupo</button>`;
+ }else{
+  S.cfg.gabetas.forEach(g=>{let oc=0;for(let f=1;f<=g.filas;f++)for(let c=0;c<g.cols;c++)if(entriesAt(`${g.id}-${colL(c)}${f}`).length)oc++;
+   body+=`<div class="row" data-a="editGab" data-g="${g.id}" style="cursor:pointer"><b>${esc(g.nombre)}</b><small>${g.cols} columnas × ${g.filas} filas · ${g.cols*g.filas} espacios · ${oc} con herramentales</small></div>`});
+  body+=`<button class="btn b" data-a="nuevaGab">＋ Nueva gabeta</button>`;
+ }
+ return shell(CFGTAB==='grupos'?'Células y grupos':'Gabetas',CFGTAB==='grupos'?'Toca un grupo para editarlo':'Tamaño de cada una',body,false);
+};
+V.editGrupo=function(){
+ const g=G;const libres=sinGrupo().filter(c=>!g.celulas.includes(c));
+ let body=`<div class="f"><label>Nombre del grupo</label><input type="text" data-g="nombre" value="${esc(g.nombre)}"></div>
+ <div class="sec">CÉLULAS DEL GRUPO · toca ✕ para quitar</div><div>${g.celulas.map(c=>`<span class="chp">${esc(c)} <i data-a="gQuita" data-c="${esc(c)}">✕</i></span>`).join('')}<span class="chp add" data-a="gAdd">＋ célula</span></div>
+ ${g.add?`<div class="row"><div class="info" style="margin:0 0 6px">Sin grupo (toca para agregar):</div>${libres.map(c=>`<span class="chp n" data-a="gPon" data-c="${esc(c)}">${esc(c)}</span>`).join('')||'<span class="info">No hay células libres.</span>'}<div class="f" style="margin-top:8px"><label>O escribe una célula nueva</label><input type="text" id="gNew" placeholder="Ej. 7A"></div><button class="btn sm b" data-a="gPonNew">Agregar</button></div>`:''}`;
+ if(g.orig){const es=S.entries.filter(e=>e.grupos&&e.grupos.includes(g.orig));
+  body+=`<div class="sec">DÓNDE ESTÁ</div>`;
+  const rows={};es.forEach(e=>{const p=parseU(e.ubic);if(!p)return;const k=`${p.g}|${p.f}`;rows[k]=(rows[k]||0)+1});
+  body+=Object.keys(rows).map(k=>{const [gg,ff]=k.split('|');const inf=filaInfo(gg,+ff);return `<div class="li"><span>${esc(gab(gg)?gab(gg).nombre:gg)} · fila ${ff}</span><b style="color:${inf.cls==='g'?'#86efac':'#fcd34d'}">${rows[k]} esp. ${inf.cls==='g'?'':'· '+esc(inf.label.toLowerCase())}</b></div>`}).join('')||'<div class="info">Aún no hay herramentales en este grupo.</div>';}
+ body+=`<button class="btn b" data-a="gGuardar">Guardar cambios</button><button class="btn g" data-a="back">Cancelar</button>${g.orig?`<button class="btn d sm" style="margin-top:16px" data-a="gBorrar">Borrar grupo</button>`:''}`;
+ return shell(g.orig?'Grupo '+esc(g.orig):'Nuevo grupo',g.orig?`${S.entries.filter(e=>e.grupos&&e.grupos.includes(g.orig)).length} herramental(es)`:'Escribe un nombre y agrega células',body,true);
+};
+V.delGrupo=function(){
+ const g=G;const es=S.entries.filter(e=>e.grupos&&e.grupos.includes(g.orig));
+ const otros=S.cfg.grupos.filter(x=>x.nombre!==g.orig);
+ const body=`<div class="warn">${es.length?'Estos herramentales no se borran. ¿Qué hago con ellos?':'Este grupo no tiene herramentales.'}</div>
+ ${es.length?`<div class="rad ${g.del==='otro'?'on':''}" data-a="delOpt" data-o="otro"><i></i><div style="flex:1">Pasarlos a otro grupo<br><select id="delDest" style="margin-top:6px">${otros.map(o=>`<option>${esc(o.nombre)}</option>`).join('')}</select></div></div><div class="rad ${g.del==='nada'?'on':''}" data-a="delOpt" data-o="nada"><i></i><div>Dejarlos sin grupo<br><span class="info" style="margin:0">Los asignas después, uno por uno</span></div></div>`:''}
+ <div class="sec">LAS CÉLULAS</div><div class="info" style="margin-top:0">${esc(g.celulas.join(', '))} pasan a “sin grupo”.</div>
+ <button class="btn d" data-a="gBorrarOk">Borrar grupo</button><button class="btn g" data-a="back">Cancelar</button>`;
+ return shell('Borrar grupo '+esc(g.orig),`Tiene ${es.length} herramental(es)`,body,true);
+};
+V.editGab=function(c){
+ const g=gab(c.g);const T=c.tmp||(c.tmp={cols:g.cols,filas:g.filas});
+ const blocked=[];const ocup={};
+ for(let f=1;f<=Math.max(T.filas,g.filas);f++)for(let k=0;k<Math.max(T.cols,g.cols);k++){const u=`${g.id}-${colL(k)}${f}`;const n=entriesAt(u).length;if(n){ocup[u]=n;if(f>T.filas||k>=T.cols)blocked.push(u)}}
+ let h=`<div class="mg" style="grid-template-columns:18px repeat(${T.cols},1fr)"><div class="h"></div>`+Array.from({length:T.cols},(_,i)=>`<div class="h">${colL(i)}</div>`).join('');
+ for(let f=1;f<=T.filas;f++){h+=`<div class="h">${f}</div>`;for(let k=0;k<T.cols;k++){const u=`${g.id}-${colL(k)}${f}`;h+=`<div class="${ocup[u]?'':'e'}">${ocup[u]?'●':''}</div>`}}
+ h+='</div>';
+ const warn=blocked.length?`<div class="warn">No se puede reducir: hay herramentales en ${blocked.slice(0,6).map(esc).join(', ')}${blocked.length>6?'…':''}. Muévelos primero.</div>`:'';
+ const body=`<div class="sz"><span>Columnas</span><div class="s"><span data-a="gabSz" data-k="cols" data-d="-1">−</span><b>${T.cols}</b><span data-a="gabSz" data-k="cols" data-d="1">+</span></div></div>
+ <div class="sz"><span>Filas</span><div class="s"><span data-a="gabSz" data-k="filas" data-d="-1">−</span><b>${T.filas}</b><span data-a="gabSz" data-k="filas" data-d="1">+</span></div></div>
+ ${h}${warn}
+ <button class="btn ${blocked.length?'off':'b'}" ${blocked.length?'disabled':''} data-a="gabGuardar">Guardar cambios</button>
+ <div class="f" style="margin-top:12px"><label>Nombre de la gabeta</label><input type="text" id="gabNom" value="${esc(g.nombre)}"></div>
+ <button class="btn g sm" data-a="gabNom">Guardar nombre</button>
+ <button class="btn d sm" style="margin-top:14px" data-a="gabBorrar">Eliminar gabeta (solo si está vacía)</button>`;
+ return shell(esc(g.nombre),`${g.cols} columnas × ${g.filas} filas · código ${g.id}`,body,true);
+};
+/* ---- enviar ---- */
+V.enviar=function(){
+ const P=pend();const rec=P.filter(c=>c.tipo==='Recepcion').length;const cont=P.filter(c=>c.tipo==='Conteo'||c.tipo==='Alta').length;const fot=P.filter(c=>c.fotoId).length;
+ let body=`<div class="kp"><div><div class="big">${rec}</div><small>llegaron</small></div><div><div class="big">${cont}</div><small>conteos y altas</small></div><div><div class="big">${fot}</div><small>fotos</small></div></div>`;
+ body+=P.slice(0,40).map(c=>`<div class="li"><span>${c.tipo==='Recepcion'?'📦':c.tipo==='Salida'?'➖':c.tipo==='Reubicacion'?'↔':'🔢'} ${esc(c.ubic||'sin ubic.')} · ${esc(c.codigo||'')} ${esc(c.nombre||'')}</span><b>${c.cant!=null?c.cant:''}</b></div>`).join('')||'<div class="info">No hay capturas pendientes de enviar.</div>';
+ if(P.length>40)body+=`<div class="info">… y ${P.length-40} más</div>`;
+ body+=`<div class="f" style="margin-top:12px"><label>Mi correo (se muestra al enviar para que lo captures rápido)</label><input type="email" id="mail" value="${esc(S.meta.correo)}" placeholder="tucorreo@gmail.com"></div>
+ <button class="btn b" ${P.length?'':'disabled'} data-a="enviarMail">✉ Mandar a mi correo</button>
+ <button class="btn g" ${P.length?'':'disabled'} data-a="descargar">Descargar Excel con fotos</button>
+ <button class="btn g" data-a="importar">Actualizar catálogo desde el Excel</button>
+ <div class="info">Después de mandar, la app te pregunta si ya lo mandaste y entonces marca esas capturas como enviadas. En tu PC pegas la hoja “Capturas” en Importar.</div>
+ <div class="sec">AVANZADO</div>
+ <div class="li"><span>Capturas ya enviadas</span><b>${S.caps.filter(c=>c.estado==='env').length}</b></div>
+ <button class="btn g sm" data-a="reenviar">Volver a incluir lo ya enviado en el próximo envío</button>
+ <button class="btn g sm" style="color:#fca5a5" data-a="reset">Borrar todo y empezar de cero</button>`;
+ return shell('Enviar a tu PC',`${P.length} captura${P.length===1?'':'s'} pendiente${P.length===1?'':'s'} de enviar`,body,false);
+};
+V.importar=function(){
+ const body=`<div class="info">Pega aquí el catálogo copiado de tu Excel (hoja “Catalogo app”) o elige el archivo .csv/.txt que te mandaste por correo.</div>
+ <textarea id="catTxt" placeholder="tipo&#9;req&#9;proveedor&#9;entrega&#9;codigo&#9;nombre..."></textarea>
+ <button class="btn b" data-a="catImportar">Importar lo pegado</button>
+ <button class="btn g" data-a="catArchivo">Elegir archivo…</button>
+ ${SAMPLE?'<button class="btn g" data-a="catEjemplo">Cargar catálogo de ejemplo (para probar)</button>':''}
+ <div class="info">El catálogo actualiza: pedidos por llegar, herramentales registrados, grupos y gabetas. Lo que capturaste y aún no envías se respeta.</div>`;
+ return shell('Actualizar catálogo',S.meta.catalogoFecha?'Último: '+S.meta.catalogoFecha:'Aún no hay catálogo',body,true);
+};
+
+/* ===================== acciones ===================== */
+const A={};
+A.back=()=>back();
+A.tab=d=>tab(d.t==='env'?'env':d.t);
+A.gab=d=>{S.meta.gab=d.g;save();render()};
+A.fila=d=>push('fila',{g:S.meta.gab,f:+d.f});
+A.esp=d=>{const c=cur();const g=c.g||S.meta.gab;if(d.new==='1'){openItem({ubic:d.u,mode:'conteo'});return}push('esp',{u:d.u})};
+A.filaok=d=>{const c=cur();const gb=gab(c.g);for(let k=0;k<gb.cols;k++){const u=`${c.g}-${colL(k)}${d.f}`;if(!entriesAt(u).length)S.cfg.vacios[u]=true}save();toast('Fila marcada como terminada');back()};
+A.vacio=d=>{if(S.cfg.vacios[d.u])delete S.cfg.vacios[d.u];else S.cfg.vacios[d.u]=true;save();render()};
+A.nuevoItem=d=>openItem({ubic:d.u,mode:'conteo'});
+A.editar=d=>{const e=S.entries.find(x=>x.id===d.id);openItem({mode:'edit',entryId:e.id,ubic:e.ubic,codigo:e.codigo,nombre:e.nombre,origen:e.origen||'SmarTeam',grupos:(e.grupos||[]).slice(),cant:e.cant,prev:e.thumb||null})};
+A.dejar=d=>{const e=S.entries.find(x=>x.id===d.id);e.okMezcla=true;save();render()};
+A.origen=d=>{D.origen=d.o;render()};
+A.grp=d=>{const i=D.grupos.indexOf(d.g);if(i>=0)D.grupos.splice(i,1);else D.grupos.push(d.g);render()};
+A.cant=d=>{D.cant=Math.max(0,(parseInt(D.cant)||0)+parseInt(d.d));render()};
+A.cfgnuevo=()=>{G={orig:null,nombre:'',celulas:[],add:false,volver:'item'};push('editGrupo')};
+A.sug=d=>{const r=refreshSug.res[+d.i];if(!r)return;D.codigo=r.codigo;D.nombre=r.nombre;if(r.grupos&&r.grupos.length)D.grupos=r.grupos.slice();
+ if(r.origen&&r.origen!=='Del pedido')D.origen=r.origen;else if(r.origen==='Del pedido'&&D.mode==='llegada')D.origen='Del pedido';
+ if(r.e&&r.e.ubic===D.ubic&&D.mode!=='llegada'){D.entryId=r.e.id;D.cant=r.e.cant;D.prev=r.e.thumb||D.prev}
+ render()};
+A.foto=()=>document.getElementById('fotoIn').click();
+A.guardarItem=async()=>{
+ const d=D;
+ d.nombre=(d.nombre||'').trim();d.codigo=(d.codigo||'').trim();d.cant=Math.max(0,parseInt(d.cant)||0);
+ if(!d.nombre){toast('Escribe el nombre del herramental');return}
+ if(d.origen!=='Sin código'&&!d.codigo){toast('Escribe el código grabado o elige “Sin código”');return}
+ if(!d.ubic&&d.mode!=='llegada'){toast('Falta la ubicación');return}
+ if(d.origen==='Sin código'&&!d.codigo){S.meta.cod++;d.codigo='L-'+pad(S.meta.cod,4)}
+ let fotoId=null,thumb=null;
+ if(d.blob){fotoId=uid();await DB.put('fotos',fotoId,d.blob);thumb=d.thumb}
+ let e=d.entryId?S.entries.find(x=>x.id===d.entryId):S.entries.find(x=>x.codigo===d.codigo&&x.ubic===d.ubic&&d.ubic);
+ const existeCodigo=S.entries.some(x=>x.codigo===d.codigo);
+ let tipo;
+ if(d.mode==='llegada')tipo='Recepcion';
+ else tipo=(existeCodigo||d.mode==='edit')?'Conteo':'Alta';
+ if(e){
+  e.nombre=d.nombre;e.codigo=d.codigo;e.origen=d.origen;e.grupos=d.grupos.slice();e.okMezcla=false;
+  if(tipo==='Recepcion')e.cant=(Number(e.cant)||0)+d.cant;else e.cant=d.cant;
+  if(fotoId){e.fotoId=fotoId;e.thumb=thumb}
+  if(d.ubic&&!e.ubic){e.ubic=d.ubic;e.sinUbic=false}
+ }else{
+  e={id:uid(),codigo:d.codigo,nombre:d.nombre,origen:d.origen,grupos:d.grupos.slice(),ubic:d.ubic||'',cant:d.cant,fotoId,thumb,fotoXls:false,sinUbic:!d.ubic};
+  S.entries.push(e);
+ }
+ S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo,codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:d.cant,ubic:e.ubic,grupos:e.grupos.slice(),req:d.req||'',nota:(d.ubic?'':'sin ubicacion'),fotoId,estado:'pend'});
+ if(d.mode==='llegada'&&d.linea!=null&&LL){const l=LL.lineas[d.linea];if(l){l.done=true;l.ubic=e.ubic;l.entry=null;l.applied=true;l.defer=!e.ubic}}
+ save();toast('Guardado');
+ const wasLlegada=d.mode==='llegada';D=null;
+ // salir del formulario (y de ubicar si aplica)
+ while(cur().v==='item'||cur().v==='ubicar')UI.stack.pop();
+ render();
+};
+A.salida=()=>{
+ modal(`<h2>Registrar salida</h2><div class="info" style="margin:0 0 6px">${esc(D.nombre)} · hay ${D.cant}</div><div class="step"><span data-a="mcant" data-d="-1">−</span><input type="number" id="mcant" inputmode="numeric" value="1" min="1"><span data-a="mcant" data-d="1">+</span></div><div class="f"><label>Motivo / célula (opcional)</label><input type="text" id="mnota"></div><button class="btn" data-a="salidaOk">Registrar salida</button><button class="btn g" data-a="closeM">Cancelar</button>`)};
+A.mcant=d=>{const i=document.getElementById('mcant');i.value=Math.max(1,(parseInt(i.value)||1)+parseInt(d.d))};
+A.closeM=()=>closeModal();
+A.salidaOk=()=>{const n=Math.max(1,parseInt(document.getElementById('mcant').value)||1);const nota=document.getElementById('mnota').value;
+ const e=S.entries.find(x=>x.id===D.entryId);e.cant=Math.max(0,(Number(e.cant)||0)-n);
+ S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'Salida',codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:n,ubic:e.ubic,grupos:(e.grupos||[]).slice(),req:'',nota:nota||'',fotoId:null,estado:'pend'});
+ save();closeModal();toast('Salida registrada');D.cant=e.cant;render()};
+A.mover=d=>{const e=S.entries.find(x=>x.id===d.id);
+ askUbic(e.grupos,e.nombre,u=>{const ant=e.ubic;e.ubic=u;e.sinUbic=false;e.okMezcla=false;
+  S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'Reubicacion',codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:e.cant,ubic:u,grupos:(e.grupos||[]).slice(),req:'',nota:ant?'desde '+ant:'asignada',fotoId:null,estado:'pend'});
+  save();toast('Movido a '+u);D=null;while(['ubicar','item','esp','fila'].includes(cur().v)&&UI.stack.length>1&&cur().v!=='fila'&&cur().v!=='esp')UI.stack.pop();render()})};
+A.borrarItem=()=>{if(!confirm('¿Eliminar este registro? Úsalo solo si lo capturaste por error.'))return;
+ const e=S.entries.find(x=>x.id===D.entryId);const enviado=S.caps.some(c=>c.codigo===e.codigo&&c.ubic===e.ubic&&c.estado==='env');
+ S.caps=S.caps.filter(c=>!(c.estado==='pend'&&c.codigo===e.codigo&&c.ubic===e.ubic));
+ if(enviado)S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'Baja',codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:0,ubic:e.ubic,grupos:[],req:'',nota:'registro eliminado',fotoId:null,estado:'pend'});
+ S.entries=S.entries.filter(x=>x.id!==e.id);save();D=null;back();toast('Registro eliminado')};
+A.fotoEsp=d=>{window._fotoEsp=d.u;document.getElementById('fotoIn').click()};
+/* ubicar */
+A.elegirOtro=()=>{PK.elegir=true;render()};
+A.pkg=d=>{PK.g=d.g;render()};
+A.pickU=d=>{const cb=PK.cb;UI.stack.pop();PK=null;cb(d.u)};
+/* sin ubicación */
+A.sinubic=()=>push('sinubic');
+/* llegó */
+A.abrirReq=d=>{LL=null;push('req',{r:d.r})};
+A.altaSinPedido=()=>askUbic([],'Alta nueva',u=>{openItem({ubic:u,mode:'alta'})});
+A.cantLinea=d=>{const l=LL.lineas[+d.i];modal(`<h2>Cantidad que llegó</h2><div class="info" style="margin:0 0 6px">${esc(l.nombre)}</div><div class="step"><span data-a="mcant" data-d="-1">−</span><input type="number" id="mcant" value="${l.cant}"><span data-a="mcant" data-d="1">+</span></div><button class="btn" data-a="cantLineaOk" data-i="${d.i}">Listo</button>`)};
+A.cantLineaOk=d=>{LL.lineas[+d.i].cant=Math.max(0,parseInt(document.getElementById('mcant').value)||0);closeModal();render()};
+A.cambiarUbicLinea=d=>{const l=LL.lineas[+d.i];const g=grupoDeCelula(l.area);askUbic(g,l.nombre,u=>{l.ubic=u;l.entry=null;l.nuevaUbic=true;l.reg2=true;
+  // ya tiene registro previo: mover la recepcion a esa ubicación (se crea/usa registro en u)
+  render()})};
+A.asignarLinea=d=>{
+ const i=+d.i;const l=LL.lineas[i];const gs=grupoDeCelula(l.area);
+ askUbic(gs,l.nombre,u=>{openItem({mode:'llegada',ubic:u,codigo:l.codigo,nombre:l.nombre,origen:'Del pedido',grupos:gs,cant:l.cant,req:LL.req,linea:i})})};
+A.confirmarReq=d=>{
+ const p=S.pedidos.find(x=>x.req===LL.req);
+ LL.lineas.forEach(l=>{
+  if(l.applied)return;
+  if(l.entry||l.nuevaUbic){
+   let e=l.entry?S.entries.find(x=>x.id===l.entry):S.entries.find(x=>x.codigo===l.codigo&&x.ubic===l.ubic);
+   const base=S.entries.find(x=>x.codigo===l.codigo);
+   if(!e){e={id:uid(),codigo:l.codigo,nombre:l.nombre,origen:(base&&base.origen)||'',grupos:(base&&base.grupos||[]).slice(),ubic:l.ubic,cant:0,fotoId:null,thumb:base?base.thumb:null,fotoXls:base?base.fotoXls:false,sinUbic:false};S.entries.push(e)}
+   e.cant=(Number(e.cant)||0)+l.cant;
+   S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'Recepcion',codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:l.cant,ubic:e.ubic,grupos:(e.grupos||[]).slice(),req:LL.req,nota:'',fotoId:null,estado:'pend'});
+  }else if(!l.done){
+   const e={id:uid(),codigo:l.codigo,nombre:l.nombre,origen:'Del pedido',grupos:grupoDeCelula(l.area),ubic:'',cant:l.cant,fotoId:null,thumb:null,fotoXls:false,sinUbic:true};S.entries.push(e);
+   S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'Recepcion',codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:l.cant,ubic:'',grupos:e.grupos.slice(),req:LL.req,nota:'sin ubicacion',fotoId:null,estado:'pend'});
+  }
+  l.applied=true});
+ p.recibido=true;LL=null;save();
+ UI.stack=[{v:'llego'}];UI.tab='llego';render();toast('Pedido recibido ✓');
+};
+/* config */
+A.cfgtab=d=>{CFGTAB=d.t;render()};
+A.quitaCel=d=>{S.cfg.celulas=S.cfg.celulas.filter(c=>c!==d.c);S.meta.cfgDirty=true;save();render()};
+A.nuevoGrupo=()=>{G={orig:null,nombre:'',celulas:[],add:false};push('editGrupo')};
+A.editGrupo=d=>{const g=S.cfg.grupos.find(x=>x.nombre===d.g);G={orig:g.nombre,nombre:g.nombre,celulas:g.celulas.slice(),add:false};push('editGrupo')};
+A.gAdd=()=>{G.add=!G.add;render()};
+A.gQuita=d=>{G.celulas=G.celulas.filter(c=>c!==d.c);render()};
+A.gPon=d=>{if(!G.celulas.includes(d.c))G.celulas.push(d.c);render()};
+A.gPonNew=()=>{const v=(document.getElementById('gNew').value||'').trim().toUpperCase();if(!v)return;
+ const otro=S.cfg.grupos.find(g=>g.nombre!==G.orig&&g.celulas.includes(v));if(otro){toast(`${v} ya está en el grupo ${otro.nombre}`);return}
+ if(!G.celulas.includes(v))G.celulas.push(v);render()};
+A.gGuardar=()=>{
+ const n=(G.nombre||'').trim();if(!n){toast('Escribe un nombre para el grupo');return}
+ if(S.cfg.grupos.some(g=>g.nombre===n&&g.nombre!==G.orig)){toast('Ya existe un grupo con ese nombre');return}
+ if(G.orig){const g=S.cfg.grupos.find(x=>x.nombre===G.orig);g.nombre=n;g.celulas=G.celulas.slice();
+  if(n!==G.orig)S.entries.forEach(e=>{if(e.grupos)e.grupos=e.grupos.map(x=>x===G.orig?n:x)})}
+ else S.cfg.grupos.push({nombre:n,celulas:G.celulas.slice()});
+ G.celulas.forEach(c=>{if(!S.cfg.celulas.includes(c))S.cfg.celulas.push(c)});
+ S.meta.cfgDirty=true;save();toast('Grupo guardado');
+ if(G.volver==='item'&&D&&!D.grupos.includes(n))D.grupos.push(n);
+ G=null;back();
+};
+A.gBorrar=()=>{G.del=S.entries.some(e=>e.grupos&&e.grupos.includes(G.orig))?'otro':'nada';push('delGrupo')};
+A.delOpt=d=>{G.del=d.o;render()};
+A.gBorrarOk=()=>{
+ const dest=document.getElementById('delDest');const o=G.orig;
+ S.entries.forEach(e=>{if(e.grupos&&e.grupos.includes(o)){e.grupos=e.grupos.filter(x=>x!==o);if(G.del==='otro'&&dest&&!e.grupos.includes(dest.value))e.grupos.push(dest.value)}});
+ G.celulas.forEach(c=>{if(!S.cfg.celulas.includes(c))S.cfg.celulas.push(c)});
+ S.cfg.grupos=S.cfg.grupos.filter(g=>g.nombre!==o);S.meta.cfgDirty=true;save();G=null;UI.stack=[{v:'cfg'}];UI.tab='cfg';render();toast('Grupo borrado')};
+A.nuevaGab=()=>{const n=Math.max(0,...S.cfg.gabetas.map(g=>parseInt(g.id)||0))+1;const id=pad(n);S.cfg.gabetas.push({id,nombre:'Gabeta '+id,cols:8,filas:8});S.meta.cfgDirty=true;save();render();toast('Gabeta '+id+' creada')};
+A.editGab=d=>push('editGab',{g:d.g});
+A.gabSz=d=>{const c=cur();const T=c.tmp;const k=d.k;const lim=k==='cols'?26:30;T[k]=Math.min(lim,Math.max(1,T[k]+parseInt(d.d)));render()};
+A.gabGuardar=()=>{const c=cur();const g=gab(c.g);g.cols=c.tmp.cols;g.filas=c.tmp.filas;S.meta.cfgDirty=true;save();toast('Tamaño guardado');back()};
+A.gabNom=()=>{const c=cur();const g=gab(c.g);const v=document.getElementById('gabNom').value.trim();if(!v)return;g.nombre=v;S.meta.cfgDirty=true;save();toast('Nombre guardado');render()};
+A.gabBorrar=()=>{const c=cur();const g=gab(c.g);if(S.entries.some(e=>e.ubic&&e.ubic.startsWith(g.id+'-'))){toast('No se puede: la gabeta tiene herramentales. Muévelos primero.');return}
+ if(S.cfg.gabetas.length<=1){toast('Debe quedar al menos una gabeta');return}
+ if(!confirm('¿Eliminar '+g.nombre+'?'))return;S.cfg.gabetas=S.cfg.gabetas.filter(x=>x.id!==g.id);if(S.meta.gab===g.id)S.meta.gab=S.cfg.gabetas[0].id;S.meta.cfgDirty=true;save();UI.stack=[{v:'cfg'}];render()};
+/* enviar / catálogo */
+A.importar=()=>push('importar');
+A.catArchivo=()=>document.getElementById('catIn').click();
+A.catEjemplo=()=>{if(!SAMPLE){toast('No hay ejemplo en esta versión');return}importCatalogo(SAMPLE)};
+A.catImportar=()=>importCatalogo(document.getElementById('catTxt').value);
+A.reenviar=()=>{S.caps.forEach(c=>c.estado='pend');save();render();toast('Todo vuelve a quedar pendiente (el Excel ignora lo repetido)')};
+A.reset=async()=>{if(!confirm('Esto borra TODO lo guardado en la app (registros, fotos, capturas sin enviar). ¿Seguro?'))return;if(!confirm('Última confirmación: se pierde lo que no hayas enviado.'))return;await DB.clear();S=defaultState();UI={tab:'gab',stack:[{v:'home'}]};await saveNow();render();toast('App reiniciada')};
+A.enviarMail=()=>doEnviar(true);
+A.descargar=()=>doEnviar(false);
+document.addEventListener('input',e=>{
+ const t=e.target;
+ if(t.id==='mail'){S.meta.correo=t.value.trim();save();return}
+ if(t.dataset&&t.dataset.m&&D){D[t.dataset.m]=t.value;if(t.dataset.m==='codigo'||t.dataset.m==='nombre')refreshSug();return}
+ if(t.dataset&&t.dataset.g==='nombre'&&G){G.nombre=t.value}
+});
+document.addEventListener('click',e=>{
+ const t=e.target.closest('[data-a]');if(!t)return;
+ const a=t.dataset.a;if(a==='tab'){tab(t.dataset.t);return}
+ if(A[a]){e.preventDefault();A[a](t.dataset,e)}
+});
+/* ===================== fotos ===================== */
+function loadImage(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{URL.revokeObjectURL(u);ok(i)};i.onerror=()=>no(new Error('imagen'));i.src=u})}
+function scaled(img,max,q){const r=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return new Promise(ok=>c.toBlob(b=>ok({blob:b,url:c.toDataURL('image/jpeg',q)}),'image/jpeg',q))}
+document.getElementById('fotoIn').addEventListener('change',async ev=>{
+ const f=ev.target.files[0];ev.target.value='';if(!f)return;
+ try{
+  const img=await loadImage(f);const big=await scaled(img,1280,0.72);const th=await scaled(img,160,0.6);
+  if(window._fotoEsp){const u=window._fotoEsp;window._fotoEsp=null;const id=uid();await DB.put('fotos',id,big.blob);
+   S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'FotoEspacio',codigo:'',nombre:'Foto general del espacio',origen:'',cant:null,ubic:u,grupos:[],req:'',nota:'',fotoId:id,estado:'pend'});save();toast('Foto guardada');return}
+  if(D){D.blob=big.blob;D.thumb=th.url;D.prev=th.url;
+   const box=document.getElementById('photoBox');if(box){box.style.backgroundImage=`url(${big.url})`;box.innerHTML='<div class="cam">📷 Cambiar foto</div>'}
+   D.prev=th.url}
+ }catch(err){toast('No pude leer la foto')}
+});
+/* ===================== catálogo ===================== */
+function parseTable(text){
+ text=String(text||'').replace(/^﻿/,'');
+ const first=text.split(/\r?\n/)[0]||'';
+ const delim=first.includes('\t')?'\t':((first.split(';').length>first.split(',').length)?';':',');
+ const rows=[];let row=[],cur='',q=false;
+ for(let i=0;i<text.length;i++){const ch=text[i];
+  if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+  else if(ch==='"'&&cur==='')q=true;
+  else if(ch===delim){row.push(cur);cur=''}
+  else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(x=>x.trim()!==''))rows.push(row);row=[]}
+  else cur+=ch}
+ row.push(cur);if(row.some(x=>x.trim()!==''))rows.push(row);
+ return rows;
+}
+function importCatalogo(text){
+ try{
+  const rows=parseTable(text);if(rows.length<2){toast('El catálogo está vacío');return}
+  const hdr=rows[0].map(norm);const ix=n=>hdr.indexOf(n);
+  if(ix('tipo')<0){toast('Falta la columna “tipo” en la primera fila');return}
+  const g=(r,n)=>{const i=ix(n);return i<0?'':String(r[i]==null?'':r[i]).trim()};
+  const peds={},items=[],grupos=[],gabs=[],cels=[];
+  rows.slice(1).forEach(r=>{const t=norm(g(r,'tipo'));
+   if(t==='pedido'){const req=g(r,'req');if(!req)return;(peds[req]=peds[req]||{req,proveedor:g(r,'proveedor'),entrega:g(r,'entrega').slice(0,10),lineas:[]}).lineas.push({codigo:g(r,'codigo'),nombre:g(r,'nombre'),cant:parseInt(g(r,'cantidad'))||1,area:g(r,'area')})}
+   else if(t==='item'){items.push({codigo:g(r,'codigo'),nombre:g(r,'nombre'),ubic:g(r,'ubicacion').toUpperCase(),cant:parseInt(g(r,'existencia'))||0,grupos:g(r,'grupos').split(/[|;]/).map(x=>x.trim()).filter(Boolean),foto:norm(g(r,'foto'))==='si',area:g(r,'area')})}
+   else if(t==='grupo'){const n=g(r,'nombre');if(n)grupos.push({nombre:n,celulas:g(r,'celulas').split(/[|;,\s]+/).filter(Boolean)})}
+   else if(t==='gabeta'){const m=/\d+/.exec(g(r,'nombre'));if(m)gabs.push({id:pad(parseInt(m[0])),nombre:g(r,'nombre'),cols:parseInt(g(r,'columnas'))||8,filas:parseInt(g(r,'filas'))||8})}
+   else if(t==='celula'){const n=g(r,'nombre');if(n)cels.push(n)}});
+  if((grupos.length||gabs.length)&&S.meta.cfgDirty&&!confirm('Tienes cambios de configuración sin enviar. ¿Reemplazar grupos y gabetas con lo del Excel?'))return;
+  const recib=new Set(S.pedidos.filter(p=>p.recibido).map(p=>p.req));
+  S.pedidos=Object.values(peds).map(p=>Object.assign(p,{recibido:recib.has(p.req)}));
+  let nuevos=0,act=0;
+  items.forEach(it=>{
+   const pendientes=S.caps.some(c=>c.estado==='pend'&&c.codigo===it.codigo);
+   let e=S.entries.find(x=>x.codigo===it.codigo&&x.ubic===it.ubic);
+   if(!e&&!it.ubic)e=S.entries.find(x=>x.codigo===it.codigo&&!x.ubic);
+   if(e){if(!pendientes){e.cant=it.cant;if(it.ubic){e.ubic=it.ubic;e.sinUbic=false}}if(it.nombre)e.nombre=it.nombre;if(it.grupos.length)e.grupos=it.grupos;if(it.foto)e.fotoXls=true;act++}
+   else{S.entries.push({id:uid(),codigo:it.codigo,nombre:it.nombre,origen:it.codigo&&/^ST-/i.test(it.codigo)?'Del pedido':'',grupos:it.grupos,ubic:it.ubic,cant:it.cant,fotoId:null,thumb:null,fotoXls:it.foto,sinUbic:false});nuevos++}});
+  if(grupos.length){S.cfg.grupos=grupos;grupos.forEach(x=>x.celulas.forEach(c=>{if(!S.cfg.celulas.includes(c))S.cfg.celulas.push(c)}))}
+  if(gabs.length)S.cfg.gabetas=gabs;
+  cels.forEach(c=>{if(!S.cfg.celulas.includes(c))S.cfg.celulas.push(c)});
+  items.forEach(it=>{if(it.area&&!S.cfg.celulas.includes(it.area)&&/^\d/.test(it.area))S.cfg.celulas.push(it.area)});
+  Object.values(peds).forEach(p=>p.lineas.forEach(l=>{if(l.area&&/^\d+[A-Z]$/i.test(l.area)&&!S.cfg.celulas.includes(l.area))S.cfg.celulas.push(l.area)}));
+  if(grupos.length||gabs.length)S.meta.cfgDirty=false;
+  S.meta.catalogoFecha=new Date().toLocaleString('es-MX');save();
+  if(!S.cfg.gabetas.some(x=>x.id===S.meta.gab))S.meta.gab=S.cfg.gabetas[0].id;
+  modal(`<h2>Catálogo actualizado ✓</h2><div class="li"><span>Pedidos por llegar</span><b>${S.pedidos.filter(p=>!p.recibido).length}</b></div><div class="li"><span>Herramentales nuevos</span><b>${nuevos}</b></div><div class="li"><span>Herramentales actualizados</span><b>${act}</b></div><div class="li"><span>Grupos</span><b>${grupos.length||'sin cambio'}</b></div><div class="li"><span>Gabetas</span><b>${gabs.length||'sin cambio'}</b></div><button class="btn" data-a="closeM">Listo</button>`);
+  UI.stack=[{v:'enviar'}];UI.tab='env';render();
+ }catch(err){console.error(err);toast('No pude leer el catálogo: '+err.message)}
+}
+document.getElementById('catIn').addEventListener('change',async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;importCatalogo(await f.text())});
+/* ===================== exportar ===================== */
+/* ---- Excel con fotos DENTRO de la celda (se copian y pegan junto con la fila) ---- */
+const XE=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'');
+const colX=i=>String.fromCharCode(65+i);
+function xCell(ref,v,s){
+ if(v==null||v==='')return `<c r="${ref}" s="${s||0}"/>`;
+ if(v&&v.img)return `<c r="${ref}" s="${s||0}" t="e" vm="${v.img}"><v>#VALUE!</v></c>`;
+ if(v&&v.date)return `<c r="${ref}" s="2"><v>${v.date}</v></c>`;
+ if(typeof v==='number'&&isFinite(v))return `<c r="${ref}" s="${s||0}"><v>${v}</v></c>`;
+ return `<c r="${ref}" s="${s||0}" t="inlineStr"><is><t xml:space="preserve">${XE(v)}</t></is></c>`;
+}
+function xSheet(rows,widths,photoH){
+ let o='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>';
+ if(widths)o+='<cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>';
+ o+='<sheetData>';
+ rows.forEach((r,ri)=>{const h=ri===0?22:(r.some(v=>v&&v.img)?photoH:0);
+  o+=`<row r="${ri+1}"${h?` ht="${h}" customHeight="1"`:''}>`+r.map((v,ci)=>xCell(colX(ci)+(ri+1),v,ri===0?1:0)).join('')+'</row>'});
+ return o+'</sheetData></worksheet>';
+}
+async function fotoExport(blob){
+ try{const img=await loadImage(blob);const r=await scaled(img,800,0.7);return await r.blob.arrayBuffer()}catch(e){return await blob.arrayBuffer()}
+}
+async function buildXlsx(caps,conConfig,parte,total){
+ const imgs=[];
+ const H=['Fecha','Codigo','Tipo','Cantidad','Ubicacion','Nota','Foto','ID','Nombre','Origen codigo','Grupos','Req','ConFoto'];
+ const rows=[H];
+ for(const c of caps){
+  let foto=null;
+  if(c.fotoId){const bl=await DB.get('fotos',c.fotoId);if(bl){imgs.push(await fotoExport(bl));foto={img:imgs.length}}}
+  const d=new Date(c.fecha);const serial=(d.getTime()-d.getTimezoneOffset()*60000)/86400000+25569;
+  rows.push([{date:serial},c.codigo||'',c.tipo,c.cant==null?'':Number(c.cant),c.ubic||'',c.nota||'',foto,c.id,c.nombre||'',c.origen||'',(c.grupos||[]).join(' | '),c.req||'',foto?'SI':'']);
+ }
+ const sheets=[['Capturas',xSheet(rows,[17,12,13,10,11,18,24,14,34,13,18,12,9],95)]];
+ if(conConfig){
+  const cr=[['tipo','nombre','celulas','columnas','filas']];
+  S.cfg.grupos.forEach(g=>cr.push(['GRUPO',g.nombre,g.celulas.join('|'),'','']));
+  S.cfg.gabetas.forEach(g=>cr.push(['GABETA',g.nombre+' ('+g.id+')','',g.cols,g.filas]));
+  sheets.push(['Config',xSheet(cr,[10,24,32,10,8])]);
+ }
+ const lm=['Hoja “Capturas”: una línea por cada movimiento hecho en la app.','Tipos: Recepcion (suma al inventario y marca Entregado), Conteo (cantidad física en ese espacio), Alta (herramental nuevo), Salida (consumo), Reubicacion (cambio de espacio), FotoEspacio, Baja.','La columna ID es única: si pegas el mismo envío dos veces, el Excel ignora lo repetido.','Ubicación = gabeta-columna+fila, por ejemplo 03-D2.','Las fotos van dentro de la celda: copia y pega las celdas A2 hasta M(última fila) en la hoja Importar y viajan junto con los datos.'];
+ if(total>1)lm.push(`Este envío viene en ${total} archivos; esta es la parte ${parte}.`);
+ sheets.push(['Leeme',xSheet(lm.map(t=>[t]),[120])]);
+ const n=imgs.length;const z=new JSZip();
+ const NS='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+ z.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${n?'<Override PartName="/xl/metadata.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheetMetadata+xml"/><Override PartName="/xl/richData/richValueRel.xml" ContentType="application/vnd.ms-excel.richvaluerel+xml"/><Override PartName="/xl/richData/rdrichvalue.xml" ContentType="application/vnd.ms-excel.rdrichvalue+xml"/><Override PartName="/xl/richData/rdrichvaluestructure.xml" ContentType="application/vnd.ms-excel.rdrichvaluestructure+xml"/><Override PartName="/xl/richData/rdRichValueTypes.xml" ContentType="application/vnd.ms-excel.rdrichvaluetypes+xml"/>':''}</Types>`);
+ z.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${NS}/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+ z.file('xl/workbook.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${NS}"><sheets>${sheets.map((s,i)=>`<sheet name="${s[0]}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets></workbook>`);
+ const b=sheets.length;let rl=sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="${NS}/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${b+1}" Type="${NS}/styles" Target="styles.xml"/>`;
+ if(n)rl+=`<Relationship Id="rId${b+2}" Type="${NS}/sheetMetadata" Target="metadata.xml"/><Relationship Id="rId${b+3}" Type="http://schemas.microsoft.com/office/2022/10/relationships/richValueRel" Target="richData/richValueRel.xml"/><Relationship Id="rId${b+4}" Type="http://schemas.microsoft.com/office/2017/06/relationships/rdRichValue" Target="richData/rdrichvalue.xml"/><Relationship Id="rId${b+5}" Type="http://schemas.microsoft.com/office/2017/06/relationships/rdRichValueStructure" Target="richData/rdrichvaluestructure.xml"/><Relationship Id="rId${b+6}" Type="http://schemas.microsoft.com/office/2017/06/relationships/rdRichValueTypes" Target="richData/rdRichValueTypes.xml"/>`;
+ z.file('xl/_rels/workbook.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rl}</Relationships>`);
+ z.file('xl/styles.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="yyyy\\-mm\\-dd\\ hh:mm"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F2937"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment vertical="center"/></xf></cellXfs></styleSheet>');
+ sheets.forEach((s,i)=>z.file(`xl/worksheets/sheet${i+1}.xml`,s[1]));
+ if(n){
+  z.file('xl/metadata.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><metadata xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:xlrd="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata"><metadataTypes count="1"><metadataType name="XLRICHVALUE" minSupportedVersion="120000" copy="1" pasteAll="1" pasteValues="1" merge="1" splitFirst="1" rowColShift="1" clearFormats="1" clearComments="1" assign="1" coerce="1"/></metadataTypes><futureMetadata name="XLRICHVALUE" count="${n}">${imgs.map((_,i)=>`<bk><extLst><ext uri="{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}"><xlrd:rvb i="${i}"/></ext></extLst></bk>`).join('')}</futureMetadata><valueMetadata count="${n}">${imgs.map((_,i)=>`<bk><rc t="1" v="${i}"/></bk>`).join('')}</valueMetadata></metadata>`);
+  z.file('xl/richData/rdrichvalue.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><rvData xmlns="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata" count="${n}">${imgs.map((_,i)=>`<rv s="0"><v>${i}</v><v>5</v></rv>`).join('')}</rvData>`);
+  z.file('xl/richData/rdrichvaluestructure.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><rvStructures xmlns="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata" count="1"><s t="_localImage"><k n="_rvRel:LocalImageIdentifier" t="i"/><k n="CalcOrigin" t="i"/></s></rvStructures>');
+  z.file('xl/richData/richValueRel.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><richValueRels xmlns="http://schemas.microsoft.com/office/spreadsheetml/2022/richvaluerel" xmlns:r="${NS}">${imgs.map((_,i)=>`<rel r:id="rId${i+1}"/>`).join('')}</richValueRels>`);
+  z.file('xl/richData/_rels/richValueRel.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${imgs.map((_,i)=>`<Relationship Id="rId${i+1}" Type="${NS}/image" Target="../media/image${i+1}.jpeg"/>`).join('')}</Relationships>`);
+  z.file('xl/richData/rdRichValueTypes.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><rvTypesInfo xmlns="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata2" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x" xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><global><keyFlags><key name="_Self"><flag name="ExcludeFromFile" value="1"/><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_DisplayString"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Flags"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Format"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_SubLabel"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Attribution"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Icon"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Display"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_CanonicalPropertyNames"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_ClassificationId"><flag name="ExcludeFromCalcComparison" value="1"/></key></keyFlags></global></rvTypesInfo>');
+  imgs.forEach((buf,i)=>z.file(`xl/media/image${i+1}.jpeg`,buf));
+ }
+ return await z.generateAsync({type:'arraybuffer',compression:'DEFLATE'});
+}
+async function doEnviar(share){
+ const P=pend();if(!P.length){toast('No hay nada pendiente');return}
+ toast('Preparando Excel con fotos…',8000);
+ try{
+  // dividir por tamaño (~14 MB de fotos por archivo)
+  const lotes=[];let curL=[],sz=0;
+  for(const c of P){let s=0;if(c.fotoId){const b=await DB.get('fotos',c.fotoId);s=b?b.size:0}
+   if(curL.length&&sz+s>14e6){lotes.push(curL);curL=[];sz=0}curL.push(c);sz+=s}
+  if(curL.length)lotes.push(curL);
+  const files=[];const st=stamp(new Date());
+  for(let i=0;i<lotes.length;i++){const buf=await buildXlsx(lotes[i],i===0,i+1,lotes.length);
+   const name=`Capturas_${st}${lotes.length>1?'_parte'+(i+1):''}.xlsx`;
+   files.push(new File([buf],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}))}
+  document.getElementById('toast').style.display='none';
+  const mail=(document.getElementById('mail')||{}).value||S.meta.correo;
+  const texto=`Capturas de gabetas ${st}. ${P.length} movimientos.`;
+  let hecho=false;
+  if(share&&navigator.canShare&&navigator.canShare({files})){
+   try{await navigator.share({files,title:'Capturas de gabetas',text:texto+(mail?` Enviar a: ${mail}`:'')});hecho=true}catch(e){if(e&&e.name==='AbortError')return}
+  }
+  if(!hecho){files.forEach(f=>{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)});
+   if(share&&mail)window.open('mailto:'+mail+'?subject='+encodeURIComponent('Capturas de gabetas '+st)+'&body='+encodeURIComponent(texto+' Adjunta el archivo descargado.'),'_self')}
+  setTimeout(()=>modal(`<h2>¿Ya lo mandaste?</h2><div class="info" style="margin:0 0 8px">Si ya lo enviaste (o lo descargaste para pasarlo), marco estas ${P.length} capturas como enviadas. Si no, déjalas pendientes y se incluirán en el siguiente envío.</div><button class="btn" data-a="marcarEnviado">Sí, ya lo mandé</button><button class="btn g" data-a="closeM">Todavía no</button>`),600);
+ }catch(err){console.error(err);document.getElementById('toast').style.display='none';toast('Error al crear el Excel: '+err.message,5000)}
+}
+A.marcarEnviado=()=>{S.meta.lotes++;pend().forEach(c=>{c.estado='env';c.lote=S.meta.lotes});S.meta.cfgDirty=false;save();closeModal();render();toast('Marcado como enviado ✓')};
+/* ===================== arranque ===================== */
+(async function(){
+ try{await DB.open();const s=await DB.get('kv','state');if(s)S=Object.assign(defaultState(),s)}catch(e){console.error(e)}
+ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+ render();
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
