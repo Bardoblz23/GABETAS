@@ -84,6 +84,9 @@ const pad=(n,l=2)=>String(n).padStart(l,'0');
 const colL=i=>String.fromCharCode(65+i);
 const parseU=u=>{const m=/^(\d+)-([A-Z]+)(\d+)$/.exec(u||'');return m?{g:m[1],c:m[2],f:+m[3]}:null};
 const norm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const nk=s=>{let k=String(s==null?'':s).toUpperCase().replace(/[\s\-_.\/]/g,'');if(/^\d+$/.test(k))k=k.replace(/^0+/,'');return k};
+const esServ=c=>{const m=/^ST-(\d+)$/i.exec(String(c||'').trim());return !!m&&parseInt(m[1])>=1000};
+function resolveCode(raw){const k=nk(raw);return ((S&&S.alias)||{})[k]||String(raw||'').trim()}
 const hoy=()=>new Date();
 const stamp=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
 const SAMPLE='';
@@ -100,7 +103,7 @@ const defaultState=()=>({v:1,
  cfg:{gabetas:[{id:'01',nombre:'Gabeta 01',cols:3,filas:4},{id:'02',nombre:'Gabeta 02',cols:3,filas:4},{id:'03',nombre:'Gabeta 03',cols:8,filas:8},{id:'04',nombre:'Gabeta 04',cols:8,filas:8}],
   grupos:[{nombre:'1A = 2A',celulas:['1A','2A']},{nombre:'3A–6A',celulas:['3A','4A','5A','6A']},{nombre:'1C = 2C',celulas:['1C','2C']}],
   celulas:['1A','2A','3A','4A','5A','6A','1C','2C'],vacios:{}},
- entries:[],pedidos:[],caps:[],meta:{cod:0,correo:'',gab:'03',catalogoFecha:null,cfgDirty:false,lotes:0}});
+ entries:[],pedidos:[],caps:[],alias:{},cat:{},meta:{cod:0,correo:'',gab:'03',catalogoFecha:null,cfgDirty:false,lotes:0}});
 let S=defaultState();
 let saveT=null;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>{DB.put('kv','state',S).catch(()=>toast('No se pudo guardar en el celular'))},250)}
@@ -214,12 +217,12 @@ const ORIG=['SmarTeam','Legacy','Sin código'];
 function newDraft(o){return Object.assign({mode:'conteo',ubic:'',entryId:null,codigo:'',nombre:'',origen:'SmarTeam',grupos:[],cant:1,prev:null,blob:null,thumb:null,req:'',linea:null,from:null},o)}
 V.item=function(c){
  const d=D;const llegada=d.mode==='llegada';
- const origs=llegada?['Del pedido',...ORIG]:ORIG;
+ const origs=['Del pedido',...ORIG];
  const titulo=d.mode==='edit'?'Editar herramental':llegada?'Llegó: '+esc(d.nombre||d.codigo):'Espacio '+esc(d.ubic);
  const sub=llegada?`Req. ${esc(d.req)} · ${d.ubic?'Ubicación '+esc(d.ubic):'sin ubicación'}`:(d.mode==='edit'?esc(d.ubic):'Misma pantalla para altas, conteos y llegadas');
  const body=`<div class="photo" id="photoBox" data-a="foto" style="${d.prev?`background-image:url(${d.prev})`:''}">${d.prev?'':'Foto del herramental'}<div class="cam">📷 ${d.prev?'Cambiar foto':'Tomar foto'}</div></div>
  <div class="f"><label>¿Qué código trae grabado?</label></div>
- <div class="seg">${origs.map(o=>`<span class="${d.origen===o?'on':''}" data-a="origen" data-o="${esc(o)}">${o}</span>`).join('')}</div>
+ <div class="seg">${origs.map(o=>`<span class="${d.origen===o?'on':''}" data-a="origen" data-o="${esc(o)}">${o==='Del pedido'?'Código ST':o}</span>`).join('')}</div>
  <div class="f"><label>Código ${d.origen==='Sin código'?'(se asignará uno propio al guardar)':'grabado'}</label><input type="text" id="fCod" data-m="codigo" value="${esc(d.codigo)}" ${d.origen==='Sin código'?'disabled placeholder="L-'+pad(S.meta.cod+1,4)+'"':''} autocomplete="off"></div>
  <div class="f"><label>Nombre del herramental</label><input type="text" id="fNom" data-m="nombre" value="${esc(d.nombre)}" autocomplete="off"></div>
  <div id="sug"></div>
@@ -236,11 +239,12 @@ function refreshSug(){
  const q=norm(D.codigo)+' '+norm(D.nombre);const a=norm(D.codigo),b=norm(D.nombre);
  if(a.length<2&&b.length<3){box.innerHTML='';return}
  const seen=new Set();const res=[];
- const add=(codigo,nombre,grupos,origen,e)=>{const k=codigo+'|'+nombre;if(seen.has(k))return;seen.add(k);
-  if((a.length>=2&&norm(codigo).includes(a))||(b.length>=3&&norm(nombre).includes(b)))res.push({codigo,nombre,grupos,origen,e})};
+ const add=(codigo,nombre,grupos,origen,e)=>{const k=codigo+'|'+nombre;if(seen.has(k))return;seen.add(k);const cc=(S.cat||{})[codigo];const extra=cc?[cc.sm,cc.lg].filter(Boolean).join(' · '):'';
+  if((a.length>=2&&norm(codigo+' '+extra).includes(a))||(b.length>=3&&norm(nombre).includes(b)))res.push({codigo,nombre,grupos,origen,e,extra})};
  S.entries.forEach(e=>add(e.codigo,e.nombre,e.grupos,e.origen,e));
  S.pedidos.forEach(p=>p.lineas.forEach(l=>add(l.codigo,l.nombre,grupoDeCelula(l.area),'Del pedido',null)));
- box.innerHTML=res.length?`<div class="info" style="margin:0 0 4px">¿Es alguno de estos?</div><div class="sug">${res.slice(0,5).map((r,i)=>`<span data-a="sug" data-i="${i}">${esc(r.codigo)} · ${esc(r.nombre)}</span>`).join('')}</div>`:'';
+ Object.keys(S.cat||{}).forEach(st=>{const c=S.cat[st];if(!c.serv)add(st,c.nombre,grupoDeCelula(c.area),'Del pedido',null)});
+ box.innerHTML=res.length?`<div class="info" style="margin:0 0 4px">¿Es alguno de estos?</div><div class="sug">${res.slice(0,5).map((r,i)=>`<span data-a="sug" data-i="${i}">${esc(r.codigo)} · ${esc(r.nombre)}${r.extra?' · '+esc(r.extra):''}</span>`).join('')}</div>`:'';
  refreshSug.res=res.slice(0,5);
 }
 function openItem(o){D=newDraft(o);push('item')}
@@ -287,13 +291,13 @@ function lineaInfo(l){
 }
 V.req=function(c){
  const p=S.pedidos.find(x=>x.req===c.r);if(!p)return shell('Pedido','', 'No existe',true);
- if(!LL||LL.req!==p.req){LL={req:p.req,lineas:p.lineas.map(l=>({codigo:l.codigo,nombre:l.nombre,cant:Number(l.cant)||1,area:l.area,done:false,defer:false,ubic:'',entry:null}))};
-  LL.lineas.forEach(l=>{const e=S.entries.find(x=>x.codigo===l.codigo&&x.ubic);if(e){l.entry=e.id;l.ubic=e.ubic}})}
- const pendNuevas=LL.lineas.filter(l=>!l.entry&&!l.done&&!l.defer).length;
+ if(!LL||LL.req!==p.req){LL={req:p.req,lineas:p.lineas.map(l=>({codigo:l.codigo,nombre:l.nombre,cant:Number(l.cant)||1,area:l.area,done:false,defer:false,ubic:'',entry:null,serv:!!l.serv||esServ(l.codigo)}))};
+  LL.lineas.forEach(l=>{if(l.serv)return;const e=S.entries.find(x=>x.codigo===l.codigo&&x.ubic);if(e){l.entry=e.id;l.ubic=e.ubic}})}
+ const pendNuevas=LL.lineas.filter(l=>!l.entry&&!l.done&&!l.defer&&!l.serv).length;
  let body='';
  LL.lineas.forEach((l,i)=>{
-  const reg=!!l.entry;const ok=reg||l.done||l.defer;
-  const tag=reg?`<span class="tg ok">ya registrado</span> ${esc(l.ubic)} · se suma`:l.done?`<span class="tg ok">nuevo</span> ${esc(l.ubic)} · foto ✓`:l.defer?`<span class="tg nw">asignar después</span> sin ubicación`:`<span class="tg nw">NUEVO</span> falta ubicación y foto`;
+  const reg=!!l.entry;const ok=reg||l.done||l.defer||l.serv;
+  const tag=l.serv?`<span class="tg ok">servicio</span> sin ubicación ni foto`:reg?`<span class="tg ok">ya registrado</span> ${esc(l.ubic)} · se suma`:l.done?`<span class="tg ok">nuevo</span> ${esc(l.ubic)} · foto ✓`:l.defer?`<span class="tg nw">asignar después</span> sin ubicación`:`<span class="tg nw">NUEVO</span> falta ubicación y foto`;
   body+=`<div class="it"><div class="l"><div class="ck ${ok?'':'o'}">${ok?'✓':''}</div><div style="flex:1"><b>${esc(l.codigo)} ${esc(l.nombre)}</b><small>${tag}</small></div><em data-a="cantLinea" data-i="${i}" style="cursor:pointer">${l.cant}</em></div>${!ok?`<button class="btn s" data-a="asignarLinea" data-i="${i}">Asignar ubicación y foto ›</button>`:''}${reg&&!l.done?`<div class="info" style="margin:4px 0 0"><span class="link" data-a="cambiarUbicLinea" data-i="${i}">Cambiar ubicación</span></div>`:''}</div>`});
  body+=`<div class="info">La cantidad viene del pedido. Toca el número para corregirla si llegó diferente.</div>`;
  body+=pendNuevas?`<button class="btn off" disabled>Confirmar (faltan ${pendNuevas} por asignar)</button><button class="btn g sm" data-a="confirmarReq" data-d="1">Confirmar y asignar los nuevos después</button>`:`<button class="btn" data-a="confirmarReq">Confirmar: todo llegó</button>`;
@@ -401,14 +405,16 @@ A.origen=d=>{D.origen=d.o;render()};
 A.grp=d=>{const i=D.grupos.indexOf(d.g);if(i>=0)D.grupos.splice(i,1);else D.grupos.push(d.g);render()};
 A.cant=d=>{D.cant=Math.max(0,(parseInt(D.cant)||0)+parseInt(d.d));render()};
 A.cfgnuevo=()=>{G={orig:null,nombre:'',celulas:[],add:false,volver:'item'};push('editGrupo')};
-A.sug=d=>{const r=refreshSug.res[+d.i];if(!r)return;D.codigo=r.codigo;D.nombre=r.nombre;if(r.grupos&&r.grupos.length)D.grupos=r.grupos.slice();
- if(r.origen&&r.origen!=='Del pedido')D.origen=r.origen;else if(r.origen==='Del pedido'&&D.mode==='llegada')D.origen='Del pedido';
+A.sug=d=>{const r=refreshSug.res[+d.i];if(!r)return;if(D.codigo&&nk(D.codigo)!==nk(r.codigo)&&(D.origen==='SmarTeam'||D.origen==='Legacy')){D.alias=D.codigo;D.aliasOrig=D.origen}D.codigo=r.codigo;D.nombre=r.nombre;if(r.grupos&&r.grupos.length)D.grupos=r.grupos.slice();
+ if(r.origen)D.origen=r.origen;
  if(r.e&&r.e.ubic===D.ubic&&D.mode!=='llegada'){D.entryId=r.e.id;D.cant=r.e.cant;D.prev=r.e.thumb||D.prev}
  render()};
 A.foto=()=>document.getElementById('fotoIn').click();
 A.guardarItem=async()=>{
  const d=D;
  d.nombre=(d.nombre||'').trim();d.codigo=(d.codigo||'').trim();d.cant=Math.max(0,parseInt(d.cant)||0);
+ let uni='';if(d.origen!=='Sin código'&&d.codigo){const rc=resolveCode(d.codigo);if(rc!==d.codigo){uni=rc;if(!d.alias){d.alias=d.codigo;d.aliasOrig=d.origen}d.codigo=rc;d.origen='Del pedido';const cc=(S.cat||{})[rc];if(cc&&!d.nombre)d.nombre=cc.nombre}}
+ if(d.alias&&d.codigo){S.alias=S.alias||{};S.alias[nk(d.alias)]=d.codigo;const cc=(S.cat=S.cat||{})[d.codigo];if(cc){if(d.aliasOrig==='Legacy')cc.lg=cc.lg||d.alias;else cc.sm=cc.sm||d.alias}}
  if(!d.nombre){toast('Escribe el nombre del herramental');return}
  if(d.origen!=='Sin código'&&!d.codigo){toast('Escribe el código grabado o elige “Sin código”');return}
  if(!d.ubic&&d.mode!=='llegada'){toast('Falta la ubicación');return}
@@ -429,9 +435,9 @@ A.guardarItem=async()=>{
   e={id:uid(),codigo:d.codigo,nombre:d.nombre,origen:d.origen,grupos:d.grupos.slice(),ubic:d.ubic||'',cant:d.cant,fotoId,thumb,fotoXls:false,sinUbic:!d.ubic};
   S.entries.push(e);
  }
- S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo,codigo:e.codigo,nombre:e.nombre,origen:e.origen,cant:d.cant,ubic:e.ubic,grupos:e.grupos.slice(),req:d.req||'',nota:(d.ubic?'':'sin ubicacion'),fotoId,estado:'pend'});
+ S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo,codigo:e.codigo,nombre:e.nombre,origen:(d.alias?(d.aliasOrig||'SmarTeam')+' '+d.alias:e.origen),cant:d.cant,ubic:e.ubic,grupos:e.grupos.slice(),req:d.req||'',nota:(d.ubic?'':'sin ubicacion'),fotoId,estado:'pend'});
  if(d.mode==='llegada'&&d.linea!=null&&LL){const l=LL.lineas[d.linea];if(l){l.done=true;l.ubic=e.ubic;l.entry=null;l.applied=true;l.defer=!e.ubic}}
- save();toast('Guardado');
+ save();toast('Guardado'+(uni?' · se unió a '+uni:''));
  const wasLlegada=d.mode==='llegada';D=null;
  // salir del formulario (y de ubicar si aplica)
  while(cur().v==='item'||cur().v==='ubicar')UI.stack.pop();
@@ -476,6 +482,7 @@ A.confirmarReq=d=>{
  const p=S.pedidos.find(x=>x.req===LL.req);
  LL.lineas.forEach(l=>{
   if(l.applied)return;
+  if(l.serv){S.caps.push({id:uid(),fecha:new Date().toISOString(),tipo:'Recepcion',codigo:l.codigo,nombre:l.nombre,origen:'Del pedido',cant:l.cant,ubic:'',grupos:[],req:LL.req,nota:'servicio',fotoId:null,estado:'pend'});l.applied=true;return}
   if(l.entry||l.nuevaUbic){
    let e=l.entry?S.entries.find(x=>x.id===l.entry):S.entries.find(x=>x.codigo===l.codigo&&x.ubic===l.ubic);
    const base=S.entries.find(x=>x.codigo===l.codigo);
@@ -582,14 +589,20 @@ function importCatalogo(text){
   const hdr=rows[0].map(norm);const ix=n=>hdr.indexOf(n);
   if(ix('tipo')<0){toast('Falta la columna “tipo” en la primera fila');return}
   const g=(r,n)=>{const i=ix(n);return i<0?'':String(r[i]==null?'':r[i]).trim()};
-  const peds={},items=[],grupos=[],gabs=[],cels=[];
+  const peds={},items=[],grupos=[],gabs=[],cels=[];const alias={},cat={};
+  const servOf=r=>norm(g(r,'servicio'))==='si'||esServ(g(r,'codigo'));
+  const regCat=r=>{const st=g(r,'codigo');if(!st)return;const sm=g(r,'smarteam'),lg=g(r,'legacy');cat[st]={nombre:g(r,'nombre'),sm,lg,area:g(r,'area'),serv:servOf(r)};[sm,lg].forEach(x=>{if(x)alias[nk(x)]=st})};
   rows.slice(1).forEach(r=>{const t=norm(g(r,'tipo'));
-   if(t==='pedido'){const req=g(r,'req');if(!req)return;(peds[req]=peds[req]||{req,proveedor:g(r,'proveedor'),entrega:g(r,'entrega').slice(0,10),lineas:[]}).lineas.push({codigo:g(r,'codigo'),nombre:g(r,'nombre'),cant:parseInt(g(r,'cantidad'))||1,area:g(r,'area')})}
-   else if(t==='item'){items.push({codigo:g(r,'codigo'),nombre:g(r,'nombre'),ubic:g(r,'ubicacion').toUpperCase(),cant:parseInt(g(r,'existencia'))||0,grupos:g(r,'grupos').split(/[|;]/).map(x=>x.trim()).filter(Boolean),foto:norm(g(r,'foto'))==='si',area:g(r,'area')})}
+   if(t==='pedido'){const req=g(r,'req');if(!req)return;regCat(r);(peds[req]=peds[req]||{req,proveedor:g(r,'proveedor'),entrega:g(r,'entrega').slice(0,10),lineas:[]}).lineas.push({codigo:g(r,'codigo'),nombre:g(r,'nombre'),cant:parseInt(g(r,'cantidad'))||1,area:g(r,'area'),serv:servOf(r)})}
+   else if(t==='item'){regCat(r);if(servOf(r))return;items.push({codigo:g(r,'codigo'),nombre:g(r,'nombre'),ubic:g(r,'ubicacion').toUpperCase(),cant:parseInt(g(r,'existencia'))||0,grupos:g(r,'grupos').split(/[|;]/).map(x=>x.trim()).filter(Boolean),foto:norm(g(r,'foto'))==='si',area:g(r,'area')})}
    else if(t==='grupo'){const n=g(r,'nombre');if(n)grupos.push({nombre:n,celulas:g(r,'celulas').split(/[|;,\s]+/).filter(Boolean)})}
    else if(t==='gabeta'){const m=/\d+/.exec(g(r,'nombre'));if(m)gabs.push({id:pad(parseInt(m[0])),nombre:g(r,'nombre'),cols:parseInt(g(r,'columnas'))||8,filas:parseInt(g(r,'filas'))||8})}
    else if(t==='celula'){const n=g(r,'nombre');if(n)cels.push(n)}});
   if((grupos.length||gabs.length)&&S.meta.cfgDirty&&!confirm('Tienes cambios de configuración sin enviar. ¿Reemplazar grupos y gabetas con lo del Excel?'))return;
+  Object.keys(cat).forEach(st=>{alias[nk(st)]=st});S.alias=alias;S.cat=cat;
+  let unidos=0;S.entries.forEach(e=>{const rc=alias[nk(e.codigo)];if(rc&&rc!==e.codigo){e.codigo=rc;unidos++}});
+  S.caps.forEach(c=>{if(c.estado==='pend'){const rc=alias[nk(c.codigo)];if(rc)c.codigo=rc}});
+  {const mE={};S.entries.forEach(e=>{if(!e.ubic)return;const k=e.codigo+'|'+e.ubic;const o=mE[k];if(!o)mE[k]=e;else{if(!o.fotoId&&!o.thumb&&(e.fotoId||e.thumb)){o.fotoId=e.fotoId;o.thumb=e.thumb}o.fotoXls=o.fotoXls||e.fotoXls;o.cant=e.cant;e._dup=true}});S.entries=S.entries.filter(e=>!e._dup)}
   const recib=new Set(S.pedidos.filter(p=>p.recibido).map(p=>p.req));
   S.pedidos=Object.values(peds).map(p=>Object.assign(p,{recibido:recib.has(p.req)}));
   let nuevos=0,act=0;
@@ -607,7 +620,7 @@ function importCatalogo(text){
   if(grupos.length||gabs.length)S.meta.cfgDirty=false;
   S.meta.catalogoFecha=new Date().toLocaleString('es-MX');save();
   if(!S.cfg.gabetas.some(x=>x.id===S.meta.gab))S.meta.gab=S.cfg.gabetas[0].id;
-  modal(`<h2>Catálogo actualizado ✓</h2><div class="li"><span>Pedidos por llegar</span><b>${S.pedidos.filter(p=>!p.recibido).length}</b></div><div class="li"><span>Herramentales nuevos</span><b>${nuevos}</b></div><div class="li"><span>Herramentales actualizados</span><b>${act}</b></div><div class="li"><span>Grupos</span><b>${grupos.length||'sin cambio'}</b></div><div class="li"><span>Gabetas</span><b>${gabs.length||'sin cambio'}</b></div><button class="btn" data-a="closeM">Listo</button>`);
+  modal(`<h2>Catálogo actualizado ✓</h2><div class="li"><span>Pedidos por llegar</span><b>${S.pedidos.filter(p=>!p.recibido).length}</b></div><div class="li"><span>Herramentales nuevos</span><b>${nuevos}</b></div><div class="li"><span>Herramentales actualizados</span><b>${act}</b></div>${unidos?'<div class="li"><span>Códigos unidos a su ST</span><b>'+unidos+'</b></div>':''}<div class="li"><span>Grupos</span><b>${grupos.length||'sin cambio'}</b></div><div class="li"><span>Gabetas</span><b>${gabs.length||'sin cambio'}</b></div><button class="btn" data-a="closeM">Listo</button>`);
   UI.stack=[{v:'enviar'}];UI.tab='env';render();
  }catch(err){console.error(err);toast('No pude leer el catálogo: '+err.message)}
 }
